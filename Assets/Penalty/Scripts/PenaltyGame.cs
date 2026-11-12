@@ -13,6 +13,8 @@ namespace PenaltyArena
         public Camera gameCamera;
         public Renderer[] goalNet = Array.Empty<Renderer>();
         public RoomConnection room;
+        public CharacterMotion keeperMotion, strikerMotion;
+        public double NetworkNow => room.NetworkTime;
         public MatchSnapshot View { get; private set; } = new MatchSnapshot();
         public MatchPhase Phase => (MatchPhase)View.phase;
         public bool Shooting => room.Connected && room.LocalSlot == View.shooter;
@@ -23,7 +25,8 @@ namespace PenaltyArena
         readonly string[] names = { "Oyuncu 1", "Oyuncu 2" };
         MatchPhase phase = MatchPhase.Lobby;
         float started, resultAt, diveAt = -100, nextSend, nextHello, lastReceived;
-        Vector3 diveTarget, lastBall;
+        Vector3 diveTarget, lastBall, queuedVelocity;
+        double shotAt, diveStartedAt=-100;
         bool dived, touched, gesture;
         int diveCode;
         Vector2 gestureStart;
@@ -43,7 +46,7 @@ namespace PenaltyArena
         void Disconnected()
         {
             phase = MatchPhase.Disconnected; View.phase = (int)phase;
-            ball.isKinematic = true; gesture = false; ready[0] = ready[1] = false;
+            ball.isKinematic = true; gesture = false; shotAt=0;diveCode=0;ready[0] = ready[1] = false;
             rematch[0] = rematch[1] = false; lastSequence = -1;
         }
         void Receive(MatchSnapshot state)
@@ -76,16 +79,14 @@ namespace PenaltyArena
                 target.y += Mathf.Max(0, power - .85f) * 5;
                 float speed = ballSpeed * (Easy ? .8f : 1) * Mathf.Lerp(.7f, 1.15f, power);
                 float flight = 11 / speed;
-                ball.isKinematic = false;
-                ball.linearVelocity = (target - ball.position) / flight - .5f * Physics.gravity * flight;
-                ball.angularVelocity = new Vector3(12, 2, 0);
-                phase = MatchPhase.Flying; started = Time.time; lastBall = ball.position;
+                queuedVelocity = (target - ball.position) / flight - .5f * Physics.gravity * flight;
+                // Reserve this shot immediately. Only the host releases it at the authored foot contact.
+                shotAt=NetworkNow+.10;phase=MatchPhase.Windup;nextSend=0;
             }
-            if (c.action == "dive" && !dived && MatchRules.CanAct(slot, rules.Shooter, phase, false)) {
-                dived = true; diveAt = Time.time;
+            if (c.action == "dive" && (!dived || (phase==MatchPhase.Aiming && NetworkNow-diveStartedAt>=MotionTiming.SaveLength(diveDuration))) && MatchRules.CanAct(slot, rules.Shooter, phase, false)) {
+                dived = true; diveAt = Time.time;diveStartedAt=NetworkNow;nextSend=0;
                 float direction = Mathf.Clamp(c.x, -1, 1);
-                int height = c.y < .25f ? 1 : c.y < .7f ? 2 : 3;
-                diveCode = height + (direction < -.15f ? 3 : direction > .15f ? 6 : 0);
+                diveCode = MotionTiming.DiveCode(direction,c.y);
                 diveTarget = new Vector3(direction * diveReach, Mathf.Clamp01(c.y) * 1.2f, .45f);
             }
         }
@@ -99,8 +100,9 @@ namespace PenaltyArena
         {
             ball.isKinematic = true; ball.position = new Vector3(0, .115f, 11); ball.rotation = Quaternion.identity;
             keeper.position = new Vector3(0, 0, .45f);
+            if(strikerMotion!=null)striker.position=strikerMotion.home;
         }
-        void ResetShot() { ResetBall(); phase = MatchPhase.Aiming; dived = touched = false; diveCode = 0; diveAt = -100; started = Time.time; }
+        void ResetShot() { ResetBall(); phase = MatchPhase.Aiming; dived = touched = false; diveCode = 0; diveAt = -100; diveStartedAt=-100; shotAt=0; started = Time.time; }
         void Resolve(ShotResult outcome)
         {
             if (phase != MatchPhase.Flying || !rules.Resolve(rules.ShotId, outcome)) return;
@@ -110,11 +112,23 @@ namespace PenaltyArena
         void FixedUpdate()
         {
             if (!room.Host || !room.Connected) return;
-            if (phase == MatchPhase.Flying || phase == MatchPhase.Aiming) {
+            double now=NetworkNow;
+            float shotElapsed=shotAt>0?(float)(now-shotAt):-1;
+            if(strikerMotion!=null)strikerMotion.Evaluate(diveCode,0,shotAt>0,phase==MatchPhase.Windup?Mathf.Min(shotElapsed,MotionTiming.StrikeContact):shotElapsed,now);
+            if(keeperMotion!=null) {
+                keeperMotion.Evaluate(diveCode,(float)(now-diveStartedAt),shotAt>0,shotElapsed,now);
+                keeperMotion.hitboxes.SetActive(phase!=MatchPhase.Disconnected);keeperMotion.hitboxes.Sync();
+                Physics.SyncTransforms();
+            }
+            else if (phase == MatchPhase.Flying || phase == MatchPhase.Aiming || phase==MatchPhase.Windup) {
                 float t = (Time.time - diveAt) / diveDuration;
                 float amount = dived ? Mathf.Sin(Mathf.Clamp01(t) * Mathf.PI * .5f) : 0;
                 keeper.position = Vector3.Lerp(new Vector3(0, 0, .45f), diveTarget, amount);
                 if (dived && t > 1.8f && phase == MatchPhase.Aiming) { keeper.position = new Vector3(0, 0, .45f); }
+            }
+            if(phase==MatchPhase.Windup && shotElapsed>=MotionTiming.StrikeContact) {
+                ball.isKinematic=false;ball.linearVelocity=queuedVelocity;ball.angularVelocity=new Vector3(12,2,0);
+                phase=MatchPhase.Flying;started=Time.time;lastBall=ball.position;nextSend=0;
             }
             if (phase == MatchPhase.Flying) {
                 Vector3 p = ball.position;
@@ -126,7 +140,8 @@ namespace PenaltyArena
                 if (phase == MatchPhase.Flying && (Time.time - started > shotTimeout || p.z < -3 || Mathf.Abs(p.x) > 9 || p.z > 20)) Resolve(touched ? ShotResult.Save : ShotResult.Miss);
                 lastBall = p;
             }
-            if (phase == MatchPhase.Result && Time.time - resultAt > 2.5f && rules.NextShot()) ResetShot();
+            if (phase == MatchPhase.Result && Time.time - resultAt > 2.5f &&
+                (!dived || now-diveStartedAt>=MotionTiming.SaveLength(diveDuration)+.1f) && rules.NextShot()) ResetShot();
         }
         void Update()
         {
@@ -140,13 +155,18 @@ namespace PenaltyArena
                     history1 = string.Join("", rules.History[1].Select(x => x == ShotResult.Goal ? "G" : x == ShotResult.Save ? "K" : "D")),
                     ball = ball.position, ballRotation = ball.rotation, keeper = keeper.position, easy = Easy,
                     diveCode = diveCode, diveProgress = dived ? Mathf.Clamp01((Time.time-diveAt)/diveDuration) : 0,
+                    shotStartedAt=shotAt,diveStartedAt=diveStartedAt,serverSentAt=NetworkNow,
+                    ballVelocity=phase==MatchPhase.Flying?ball.linearVelocity:Vector3.zero,
                     message = phase == MatchPhase.Result || phase == MatchPhase.Finished ? (rules.History[rules.Shooter].LastOrDefault() == ShotResult.Goal ? "GOL" : touched ? "KURTARIŞ" : "DIŞARIDA") : "" });
             }
             if (!room.Host && room.Connected) {
                 float blend = 1 - Mathf.Exp(-22 * Time.deltaTime);
-                ball.transform.position = Vector3.Lerp(ball.transform.position, View.ball, blend);
+                float age=(float)System.Math.Clamp(NetworkNow-View.serverSentAt,0,.1);
+                Vector3 displayedBall=View.ball;
+                if(Phase==MatchPhase.Flying)displayedBall+=View.ballVelocity*age+.5f*Physics.gravity*age*age;
+                ball.transform.position = Vector3.Lerp(ball.transform.position, displayedBall, blend);
                 ball.transform.rotation = Quaternion.Slerp(ball.transform.rotation, View.ballRotation, blend);
-                keeper.position = Vector3.Lerp(keeper.position, View.keeper, blend);
+                if(keeperMotion==null)keeper.position = Vector3.Lerp(keeper.position, View.keeper, blend);
             }
             bool inMatch = room.Connected && Phase != MatchPhase.Lobby && Phase != MatchPhase.Disconnected;
             bool goalie = inMatch && !Shooting;
@@ -163,9 +183,14 @@ namespace PenaltyArena
             foreach(var renderer in goalNet)if(renderer!=null)renderer.enabled=visible;
         }
         public float ScreenDirectionToWorld(float x) => x * (gameCamera.transform.right.x >= 0 ? 1 : -1);
+        void SendDive(float x,float y)
+        {
+            if(keeperMotion!=null)keeperMotion.PredictDive(MotionTiming.DiveCode(x,y),NetworkNow);
+            room.Send(new PlayerCommand {action="dive",shotId=View.shotId,x=x,y=y});
+        }
         void ReadInput()
         {
-            if (!room.Connected || Stale || !(Phase == MatchPhase.Aiming || Phase == MatchPhase.Flying)) return;
+            if (!room.Connected || Stale || !(Phase == MatchPhase.Aiming || Phase == MatchPhase.Windup || Phase == MatchPhase.Flying)) return;
             Vector2 pos = Vector2.zero; bool down = false, held = false, up = false;
             if (Touchscreen.current != null && (Touchscreen.current.primaryTouch.press.isPressed || Touchscreen.current.primaryTouch.press.wasReleasedThisFrame)) {
                 var touch = Touchscreen.current.primaryTouch; pos = touch.position.ReadValue(); down = touch.press.wasPressedThisFrame; held = touch.press.isPressed; up = touch.press.wasReleasedThisFrame;
@@ -182,13 +207,13 @@ namespace PenaltyArena
                 Aim = new Vector2(Mathf.Clamp(ScreenDirectionToWorld(delta.x) * 14, -4.8f, 4.8f), Mathf.Clamp(delta.y * 6, .15f, 3.6f)); Power = Mathf.Clamp01(delta.magnitude / .5f);
                 if (up) {
                     if (Shooting && delta.magnitude > .035f) room.Send(new PlayerCommand { action = "shoot", shotId = View.shotId, x = Aim.x, y = Aim.y, power = Power });
-                    else if (!Shooting) room.Send(new PlayerCommand { action = "dive", shotId = View.shotId, x = delta.magnitude < .035f ? 0 : Mathf.Clamp(ScreenDirectionToWorld(delta.x) * 8, -1, 1), y = Mathf.Clamp01(delta.y * 8) });
+                    else if (!Shooting) SendDive(delta.magnitude < .035f ? 0 : Mathf.Clamp(ScreenDirectionToWorld(delta.x) * 8, -1, 1),Mathf.Clamp01(delta.y*8));
                     gesture = false;
                 }
             }
             var key = Keyboard.current;
             if (!Shooting && key != null && (key.leftArrowKey.wasPressedThisFrame || key.rightArrowKey.wasPressedThisFrame || key.spaceKey.wasPressedThisFrame))
-                room.Send(new PlayerCommand { action = "dive", shotId = View.shotId, x = ScreenDirectionToWorld(key.leftArrowKey.wasPressedThisFrame ? -1 : key.rightArrowKey.wasPressedThisFrame ? 1 : 0), y = key.upArrowKey.isPressed ? 1 : 0 });
+                SendDive(ScreenDirectionToWorld(key.leftArrowKey.wasPressedThisFrame ? -1 : key.rightArrowKey.wasPressedThisFrame ? 1 : 0),key.upArrowKey.isPressed ? 1 : 0);
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Text;
 using Unity.Collections;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -15,6 +16,8 @@ namespace PenaltyArena
     {
         public int sequence, shotId, shooter, phase, score0, score1, winner = -1;
         public int diveCode; public float diveProgress;
+        public double shotStartedAt, diveStartedAt, serverSentAt;
+        public Vector3 ballVelocity;
         public string name0 = "Oyuncu 1", name1 = "Oyuncu 2", history0 = "", history1 = "";
         public bool ready0, ready1, easy; public int count;
         public Vector3 ball, keeper; public Quaternion ballRotation; public string message;
@@ -28,6 +31,7 @@ namespace PenaltyArena
         public bool Host => manager != null && manager.IsHost;
         public int LocalSlot => Host ? 0 : 1;
         public int Count => Host ? manager.ConnectedClients.Count : (Connected ? 2 : 0);
+        public double NetworkTime => Connected ? manager.ServerTime.Time : Time.timeAsDouble;
         public event Action<int, PlayerCommand> Command;
         public event Action<MatchSnapshot> Snapshot;
         public event Action Lost;
@@ -51,13 +55,13 @@ namespace PenaltyArena
             if (registered || manager.CustomMessagingManager == null) return;
             manager.CustomMessagingManager.RegisterNamedMessageHandler("pa.cmd", (sender, reader) => {
                 if (!Host || (sender != peer && sender != manager.LocalClientId)) return;
-                try { reader.ReadValueSafe(out string json); if (json.Length > 1024) return;
+                try { string json=ReadJson(reader,1024);
                     Command?.Invoke(sender == manager.LocalClientId ? 0 : 1, JsonUtility.FromJson<PlayerCommand>(json));
                 } catch (Exception e) { Debug.LogWarning(e.Message); }
             });
             manager.CustomMessagingManager.RegisterNamedMessageHandler("pa.state", (sender, reader) => {
                 if (Host || sender != NetworkManager.ServerClientId) return;
-                try { reader.ReadValueSafe(out string json); if (json.Length <= 8192) Snapshot?.Invoke(JsonUtility.FromJson<MatchSnapshot>(json)); }
+                try { Snapshot?.Invoke(JsonUtility.FromJson<MatchSnapshot>(ReadJson(reader,8192))); }
                 catch (Exception e) { Debug.LogWarning(e.Message); }
             });
             registered = true;
@@ -120,8 +124,19 @@ namespace PenaltyArena
         }
         void SendJson(string channel, ulong recipient, string json, NetworkDelivery delivery)
         {
-            using var writer = new FastBufferWriter(16384, Allocator.Temp);
-            writer.WriteValueSafe(json); manager.CustomMessagingManager.SendNamedMessage(channel, recipient, writer, delivery);
+            // NGO's default string encoding doubles ASCII JSON. UTF-8 keeps motion snapshots below MTU
+            // and preserves Turkish names. Very long sudden-death histories can use fragmentation.
+            byte[] bytes=Encoding.UTF8.GetBytes(json);
+            using var writer = new FastBufferWriter(bytes.Length+4, Allocator.Temp);
+            writer.WriteValueSafe(bytes.Length);writer.WriteBytesSafe(bytes);
+            if(writer.Length>1100)delivery=NetworkDelivery.ReliableFragmentedSequenced;
+            manager.CustomMessagingManager.SendNamedMessage(channel, recipient, writer, delivery);
+        }
+        static string ReadJson(FastBufferReader reader,int maximum)
+        {
+            reader.ReadValueSafe(out int length);
+            if(length<0 || length>maximum || length>reader.Length-reader.Position)throw new ArgumentException("Invalid message length");
+            var bytes=new byte[length];reader.ReadBytesSafe(ref bytes,length);return Encoding.UTF8.GetString(bytes);
         }
         public async void Leave()
         {

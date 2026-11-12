@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace PenaltyArena
 {
     public enum ShotResult { Goal, Save, Miss }
-    public enum MatchPhase { Lobby, Aiming, Flying, Result, Finished, Disconnected }
+    public enum MatchPhase { Lobby, Aiming, Flying, Result, Finished, Disconnected, Windup }
     [Serializable] public sealed class MatchRules
     {
         public int Shooter { get; private set; }
@@ -31,7 +31,7 @@ namespace PenaltyArena
         {
             if (actor < 0 || actor > 1) return false;
             return shot ? actor == shooter && phase == MatchPhase.Aiming
-                : actor != shooter && (phase == MatchPhase.Aiming || phase == MatchPhase.Flying);
+                : actor != shooter && (phase == MatchPhase.Aiming || phase == MatchPhase.Windup || phase == MatchPhase.Flying);
         }
     }
 }

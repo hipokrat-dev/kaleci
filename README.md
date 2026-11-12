@@ -6,7 +6,7 @@
 
 1. Unity Hub → Add → bu repoyu klonladığın klasörü seç.
 2. Unity **6000.6.8f1** ile aç. Paketlerin çözülmesini bekle.
-3. İlk klonlamada `Assets/Penalty/Scenes/Arena.unity` sahnesini aç. Stadyum ve kaleci paketleri entegre edilmiş yerel kurulumda `ArenaStadium.unity` kullanılır; yalnız kaleci paketi varsa `ArenaWithGoalie.unity` kullanılır.
+3. İlk klonlamada `Assets/Penalty/Scenes/Arena.unity` sahnesini aç. Stadyum ve kaleci paketleri entegre edilmiş yerel kurulumda animasyon üretiminden sonra `ArenaAnimated.unity` kullanılır; yalnız kaleci paketi varsa `ArenaWithGoalie.unity` kullanılır.
 4. Sahneyi yeniden üretmek için `Penalty Arena → 01 — Sahneyi yeniden oluştur`. Bu işlem yalnızca üretilen Arena sahnesini yeniler; sahnede elle yaptığın değişiklikleri önce farklı adla kaydet.
 
 ## İnternet üzerinden iki tablet
@@ -35,9 +35,11 @@ Port yönlendirme gerekmez; internet yolu Multiplayer Services Session + Relay k
 
 `PenaltyGame`: host yetkili fizik ve skor, şut kimliği/evre/rol/sayısal girdi doğrulaması. Hedef yalnızca şut bırakıldığında gönderilir. İstemci 20 Hz snapshot alır ve görsel pozisyonları yumuşatır. Topun tamamının kale düzlemini geçmesi gol sayılır. Direk sonrası oyun süresi dolana dek sürer; ikinci vuruş reddedilir. Kaleci temasına rağmen içeri giren top gol olabilir.
 
-`MatchRules`: beşer atış, eşit çift ek atış, tek sonuç, rol değişimi. `RuleChecks.Run` gerçek Unity Editor içinde 25 assertion çalıştırır.
+`MatchRules`: beşer atış, eşit çift ek atış, tek sonuç, rol değişimi. `RuleChecks.Run` gerçek Unity Editor içinde 28 assertion çalıştırır.
 
-`ArenaBuilder`: tekrar üretilebilir mobil URP sahnesi ve Android build komutu.
+`CharacterMotion` / `KeeperHitboxes`: ortak zaman çizelgesinde şut, dokuz kurtarış, toparlanma ve kemikleri izleyen çarpışma alanları. `MotionAuthoring` bu rig üzerinde 30 Hz yerel animasyon eğrileri üretir. Ayrıntılar: `Docs/animation.md`.
+
+`ArenaBuilder`: tekrar üretilebilir mobil URP sahnesi ve Android build komutu. Animasyonlu sahne varsa onu tercih eder.
 
 `Blender/build_goal.py`: metre ölçeğinde kale/file, UV, .blend ve .fbx üretimi.
 
@@ -50,12 +52,12 @@ Otomatik iki süreç testi: development macOS uygulamasına `-arena-smoke-host` 
 ## Mevcut eksikler
 
 - Super Goalie karakter/top görselleri ve kaleci animasyonları ile KCISA stadyumunun seçilmiş parçaları entegre edildi. Sanat yönetimi hâlâ geliştirme aşamasında.
-- Kaleci artık Super Goalie humanoid modeli; bekleme ve merkez/sağ/sol kurtarış pozları bağlı. Şutçu aynı humanoid modelin açık formalı geçici uyarlamasıdır; bekleme animasyonu vardır. Gerçek şut animasyonu, yere iniş ve ayağa kalkış geçişleri ile premium malzemeler tamamlanmadı. Kaleci görsel pozu ile basit fizik collider’larının tam hizalanması henüz yapılmadı.
+- Şutçu için yaklaşma, geriye salınım, ayak–top teması ve takip hareketi üretildi. Kalecinin dokuz kurtarışı iniş, ayağa kalkış ve merkeze dönüş içerir; el/gövde/uzuv collider’ları kemikleri izler. Karakter modelleri hâlâ aynı Super Goalie modelinin iki forma uyarlamasıdır; nihai karakter ve sanat kalitesi değildir.
 - KCISA tribünleri ve iç yapısı URP materyalleriyle çim sahaya uyarlandı. 3.442 koltuk sadeleştirilip 45 bölgeye birleştirildi; dokular en fazla 1024 px. Son LOD, seyirci, baked lighting ve cihaz profili çalışmaları tamamlanmadı.
 - Stadyum sahnesinde Blender kale modeli kullanılır. Birleşik file kaleci kamerasında gizlenir; fizik collider’ları korunur.
 - Sinematik açılış videosu, özel sesler, file deformasyonu, replay ve son arayüz tasarımı eklenmedi.
 - Gerçek cihazda dokunma, farklı en-boy oranları, 30/60 FPS ölçümleri yapılmadı.
-- İnternet gecikmesi telafisi/lag compensation yok; katılan oyuncu bir ağ turu kadar dezavantaj yaşayabilir. Sıfır gecikme iddiası yok.
+- Animasyonlar ortak ağ saatiyle örneklenir; katılan kalecinin yerel hareketi hemen gösterilir. Host fizik doğrulamasında geriye sarma yoktur; gecikme hâlâ kurtarış zamanlamasını etkileyebilir.
 - Host migration yok. Kopmada kazanan ilan edilmez; odadan çıkıp yeni bağlantı kurulur.
 - Bu prototipte süreç arka plana alındığında bağlantı dayanıklılığı ve gelişmiş saldırı/rate-limit testleri tamamlanmadı.
 
@@ -88,3 +90,9 @@ Araç yalnız seçilmiş modelleri, materyalleri ve renk dokularını getirir. K
 ### Ağ testi
 
 macOS development build sonrasında `python3 Tools/run_network_smoke.py` iki süreçle loopback testi yapar. `python3 Tools/run_network_smoke.py --relay` bağlı Cloud projesinde geçici özel oda açar; iki ayrı anonim profil kullanır. İki süreçte de 10 atışın `5:0` / `GGGGG/DDDDD` sonucunu doğrular ve test oturumundan ayrılır. Günlükler Git dışındaki `Logs` klasöründedir. Bu testler fiziksel Android cihaz performansını ölçmez.
+
+### Şut ve kurtarışları oluşturma
+
+Paketler ve `ArenaStadium.unity` hazırken `Penalty Arena → 07 — Şut ve kurtarışları oluştur` komutunu çalıştır. `ArenaAnimated.unity` ve `Assets/Penalty/Art/Motion` içindeki klipler üretilir. Önceki sahneler kaynak olarak korunur. Animasyonlu sahnenin açık, kaydedilmemiş sürümü yeniden üretim sırasında `Art/Motion/BeforeRebuild.unity` kopyasına alınır. İki cihazda aynı yeni APK kullanılmalıdır; ağ mesajı biçimi UTF-8 olarak güncellenmiştir.
+
+`python3 Tools/run_network_smoke.py --relay --motion` gerçek Relay üzerinde bir gol, dört animasyonlu kurtarış ve beş dışarı atışı doğrular. Ayrıca her iki uygulamada dokuz yön için ayrı fizik sahnesinde el–top çarpışmasını ve ters tarafa atlayışta topun geçmesini denetler. Bu test bir oyun modu değildir.

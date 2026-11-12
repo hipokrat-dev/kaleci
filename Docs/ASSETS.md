@@ -24,7 +24,7 @@ Her iki paketin yerel içeriği incelendi. Ayrı lisans metni bulunduğu iddia e
 
 Kullanıcının indirdiği `Super GoalieBasic.unitypackage` yerel önbellekte bulundu. Character.fbx, karakter/top dokuları ve kaleci animasyonları seçilerek GUID'leri korunmuş şekilde Assets/SuperGoalie altına aktarıldı. Kaynak paketin ProjectSettings, Packages/manifest.json, AI scriptleri, eklentileri, sesleri ve eski demo sahnesi mevcut projeye taşınmadı. Orijinal paket önbellekte değişmeden duruyor. Yayıncı kılavuzu Docs/SuperGoalie içinde korundu.
 
-Bu paket Standard Unity Asset Store EULA kapsamındaki üçüncü taraf varlıktır; bağımsız varlık paketi olarak yeniden dağıtım amacı taşımaz. URP materyalleri ve oyuna özel AnimatorController Assets/Penalty/Art/Goalie altında oluşturuldu. Önceki geometrik kaleci collider'ları korunuyor; bunların animasyondaki el/gövde pozlarıyla tam hizalanması sonraki oynanış düzenlemesidir.
+Bu paket Standard Unity Asset Store EULA kapsamındaki üçüncü taraf varlıktır; bağımsız varlık paketi olarak yeniden dağıtım amacı taşımaz. URP materyalleri ve oyuna özel AnimatorController Assets/Penalty/Art/Goalie altında oluşturuldu. Temel `ArenaWithGoalie` sahnesindeki eski collider’lar korunur; `ArenaAnimated` sahnesinde bunlar kemikleri izleyen collider’larla değiştirilir.
 
 ## KCISA stadyum entegrasyonu — 12 Kasım 2026
 
@@ -32,4 +32,13 @@ Yerel paketten 478 kaynak model/materyal/renk dokusu seçildi (yaklaşık 697 Mi
 
 3.442 ayrıntılı koltuk, kaynak yerleşimleri korunarak özgün düşük poligonlu koltuklarla değiştirildi. Çatı kaplaması çıkarıldı; tribün, duvar ve çelik yapı seçimi açık gece arenasına uyarlandı. Kaynak renk dokularını kullanan URP materyalleri türetildi. Kaynak materyal/doku/mesh, türetilmiş birleşik mesh, yerleşim JSON'u ve ArenaStadium sahnesi public repoya gönderilmez.
 
-Çim dokusu, sade koltuklar ve ışık panelleri Editor koduyla üretilir. Blender Goal.fbx stadyum sahnesinde kullanılır. Super Goalie modeli şutçu için de geçici olarak kullanıldı; IdleNonAlert bekleme klibi retarget edildi. Paket içinde şut vuruşu klibi yoktur; şut animasyonu tamamlanmış sayılmaz.
+Çim dokusu, sade koltuklar ve ışık panelleri Editor koduyla üretilir. Blender Goal.fbx stadyum sahnesinde kullanılır. Super Goalie modeli şutçu için de geçici olarak kullanıldı; IdleNonAlert bekleme klibi retarget edildi. Paket içinde şut vuruşu klibi yoktur. Sonraki animasyon çalışmasında bu rig için özgün vuruş eğrileri yazılmıştır; `IdleNonAlert` yerine ayakları yere basan özel hazırlık pozu kullanılır.
+
+## Hareketler — 12 Kasım 2026
+
+`MotionBaker` tam PunchDownCenter, PunchMiddleCentre, PunchHighCentre, PunchLowLeft, PunchMiddleLeft ve PunchHighLeft kliplerini kaynak alır; sağ yönler aynalanır. Uzanma hedefleri, iniş/toparlanma zamanları ve merkeze dönüş oyuna uyarlanır. Şut 2,4 saniyelik özgün kemik hareketleriyle oluşturulur; ayak teması 0,58 saniyedir. Kaynak modele uyarlanmış çıktı klipleri, kontrolörleri ve `ArenaAnimated.unity` Git dışında kalır; üretim kodu repodadır.
+
+Resmi API referansları:
+- https://docs.unity.com/en-us/engine/6000.0/script-reference/unityengine/animationclip/sampleanimation
+- https://docs.unity.com/en-us/engine/6000.0/script-reference/unityeditor/animationutility/seteditorcurve
+- https://docs.unity.com/en-us/engine/6000.0/script-reference/unityengine/skinnedmeshrenderer/bakemesh

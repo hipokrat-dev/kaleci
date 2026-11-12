@@ -24,6 +24,10 @@ Recordings/
 /Assets/HandballStadium.meta
 /Assets/Penalty/Art/Stadium/
 /Assets/Penalty/Art/Stadium.meta
+/Assets/Penalty/Art/Motion/
+/Assets/Penalty/Art/Motion.meta
+/Assets/Penalty/Scenes/ArenaAnimated.unity
+/Assets/Penalty/Scenes/ArenaAnimated.unity.meta
 /Assets/Penalty/Scenes/ArenaStadium.unity
 /Assets/Penalty/Scenes/ArenaStadium.unity.meta
 /Assets/Penalty/Art/Goalie/
@@ -38,6 +42,7 @@ Recordings/
 /Docs/goalie-*.txt
 /Docs/goalie-*.done
 /Docs/stadium-*
+/Docs/motion-*
 
 # Local service credentials and signing material
 .env

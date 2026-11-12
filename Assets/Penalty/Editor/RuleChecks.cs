@@ -30,6 +30,9 @@ namespace PenaltyArena.Editor
             Check(!MatchRules.CanAct(1,0,MatchPhase.Aiming,true),"Keeper cannot shoot");
             Check(!MatchRules.CanAct(0,0,MatchPhase.Flying,false),"Shooter cannot dive");
             Check(!MatchRules.CanAct(0,0,MatchPhase.Flying,true),"Second shot rejected");
+            Check(!MatchRules.CanAct(0,0,MatchPhase.Windup,true),"Duplicate during foot windup rejected");
+            Check(MatchRules.CanAct(1,0,MatchPhase.Windup,false),"Keeper can react to run-up");
+            Check(!MatchRules.CanAct(0,0,MatchPhase.Windup,false),"Shooter cannot dive during windup");
             Check(!MatchRules.CanAct(2,0,MatchPhase.Aiming,false),"Third player rejected by command rule");
             Check(!MatchRules.CanAct(1,0,MatchPhase.Finished,false),"Finished input rejected");
             Check(MatchRules.CanAct(1,0,MatchPhase.Flying,false),"Keeper can react in flight");
