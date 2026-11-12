@@ -11,7 +11,7 @@
 1. Super Goalie (Basic), Wasu Studio — https://assetstore.unity.com/packages/templates/packs/super-goalie-basic-144535
 2. kcisa - Olympic Park Handball Stadium — https://assetstore.unity.com/packages/3d/props/kcisa-olympic-park-handball-stadium-288707
 
-Bu iki paketin lisans dosyaları ve içerikleri henüz yerelde doğrulanmadı. Hesap sahipliği 12 Kasım 2026 tarihinde kullanıcının giriş yaptığı Asset Store ekranında her iki paket için doğrulandı. KCISA Built-in materyalleri URP'ye dönüştürülmeli; orijinal paket 5.6 GB, tüm içeriği mobil oyuna taşınmamalı. Paket içindeki atıf/lisans dosyaları içe aktarma sırasında korunmalı.
+Her iki paketin yerel içeriği incelendi. Ayrı lisans metni bulunduğu iddia edilmiyor; kaynak paketler yerel önbellekte korunuyor. Hesap sahipliği 12 Kasım 2026 tarihinde kullanıcının giriş yaptığı Asset Store ekranında her iki paket için doğrulandı. KCISA Built-in materyalleri URP'ye dönüştürülmeli; orijinal paket 5.6 GB, tüm içeriği mobil oyuna taşınmamalı. Paket içindeki atıf/lisans dosyaları içe aktarma sırasında korunmalı.
 
 ## Resmi API kaynakları
 
@@ -25,3 +25,11 @@ Bu iki paketin lisans dosyaları ve içerikleri henüz yerelde doğrulanmadı. H
 Kullanıcının indirdiği `Super GoalieBasic.unitypackage` yerel önbellekte bulundu. Character.fbx, karakter/top dokuları ve kaleci animasyonları seçilerek GUID'leri korunmuş şekilde Assets/SuperGoalie altına aktarıldı. Kaynak paketin ProjectSettings, Packages/manifest.json, AI scriptleri, eklentileri, sesleri ve eski demo sahnesi mevcut projeye taşınmadı. Orijinal paket önbellekte değişmeden duruyor. Yayıncı kılavuzu Docs/SuperGoalie içinde korundu.
 
 Bu paket Standard Unity Asset Store EULA kapsamındaki üçüncü taraf varlıktır; bağımsız varlık paketi olarak yeniden dağıtım amacı taşımaz. URP materyalleri ve oyuna özel AnimatorController Assets/Penalty/Art/Goalie altında oluşturuldu. Önceki geometrik kaleci collider'ları korunuyor; bunların animasyondaki el/gövde pozlarıyla tam hizalanması sonraki oynanış düzenlemesidir.
+
+## KCISA stadyum entegrasyonu — 12 Kasım 2026
+
+Yerel paketten 478 kaynak model/materyal/renk dokusu seçildi (yaklaşık 697 MiB). Tam demo sahnesi, ProjectSettings, eklenti veya script taşınmadı. Yerleşimler paket içindeki Demo_SKS sahnesinden okunur. Unity'nin materyal biçim güncellemeleri korunur; orijinal `.unitypackage` değişmeden durur. Paket dizininde ayrıca lisans metni bulunmadı; sahiplik önceki Asset Store oturumunda doğrulanmıştı.
+
+3.442 ayrıntılı koltuk, kaynak yerleşimleri korunarak özgün düşük poligonlu koltuklarla değiştirildi. Çatı kaplaması çıkarıldı; tribün, duvar ve çelik yapı seçimi açık gece arenasına uyarlandı. Kaynak renk dokularını kullanan URP materyalleri türetildi. Kaynak materyal/doku/mesh, türetilmiş birleşik mesh, yerleşim JSON'u ve ArenaStadium sahnesi public repoya gönderilmez.
+
+Çim dokusu, sade koltuklar ve ışık panelleri Editor koduyla üretilir. Blender Goal.fbx stadyum sahnesinde kullanılır. Super Goalie modeli şutçu için de geçici olarak kullanıldı; IdleNonAlert bekleme klibi retarget edildi. Paket içinde şut vuruşu klibi yoktur; şut animasyonu tamamlanmış sayılmaz.

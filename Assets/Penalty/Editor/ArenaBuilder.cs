@@ -105,17 +105,23 @@ namespace PenaltyArena.Editor
             EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene("Assets/Penalty/Scenes/Arena.unity",true)};
             AssetDatabase.SaveAssets(); Debug.Log("PENALTY_SCENE_CREATED");
         }
+        static string BuildScene()
+        {
+            if(File.Exists(StadiumIntegration.Output) && File.Exists("Assets/HandballStadium/PenaltyLayout.json"))return StadiumIntegration.Output;
+            if(File.Exists("Assets/Penalty/Scenes/ArenaWithGoalie.unity") && File.Exists("Assets/SuperGoalie/Meshes/Characters/Players/Player001/Character.fbx"))return "Assets/Penalty/Scenes/ArenaWithGoalie.unity";
+            return "Assets/Penalty/Scenes/Arena.unity";
+        }
         [MenuItem("Penalty Arena/02 — Android APK oluştur")]
         public static void BuildAndroid()
         {
             Directory.CreateDirectory("Builds");
-            var result=BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes=new[]{File.Exists("Assets/Penalty/Scenes/ArenaWithGoalie.unity") && File.Exists("Assets/SuperGoalie/Meshes/Characters/Players/Player001/Character.fbx") ? "Assets/Penalty/Scenes/ArenaWithGoalie.unity" : "Assets/Penalty/Scenes/Arena.unity"},locationPathName="Builds/PenaltiArena-dev.apk",target=BuildTarget.Android,options=BuildOptions.Development });
+            var result=BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes=new[]{BuildScene()},locationPathName="Builds/PenaltiArena-dev.apk",target=BuildTarget.Android,options=BuildOptions.Development });
             if(result.summary.result!=BuildResult.Succeeded) throw new System.Exception("Android build: "+result.summary.result);
         }
         public static void BuildMac()
         {
             Directory.CreateDirectory("Builds");
-            var result=BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes=new[]{File.Exists("Assets/Penalty/Scenes/ArenaWithGoalie.unity") && File.Exists("Assets/SuperGoalie/Meshes/Characters/Players/Player001/Character.fbx") ? "Assets/Penalty/Scenes/ArenaWithGoalie.unity" : "Assets/Penalty/Scenes/Arena.unity"},locationPathName="Builds/PenaltiArena.app",target=BuildTarget.StandaloneOSX,options=BuildOptions.Development });
+            var result=BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes=new[]{BuildScene()},locationPathName="Builds/PenaltiArena.app",target=BuildTarget.StandaloneOSX,options=BuildOptions.Development });
             if(result.summary.result!=BuildResult.Succeeded) throw new System.Exception("Mac build: "+result.summary.result);
         }
     }

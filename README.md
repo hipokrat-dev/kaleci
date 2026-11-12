@@ -6,21 +6,21 @@
 
 1. Unity Hub → Add → bu repoyu klonladığın klasörü seç.
 2. Unity **6000.6.8f1** ile aç. Paketlerin çözülmesini bekle.
-3. İlk klonlamada `Assets/Penalty/Scenes/Arena.unity` sahnesini aç. Kaleci paketi entegre edilmiş yerel kurulumda `ArenaWithGoalie.unity` kullanılır.
+3. İlk klonlamada `Assets/Penalty/Scenes/Arena.unity` sahnesini aç. Stadyum ve kaleci paketleri entegre edilmiş yerel kurulumda `ArenaStadium.unity` kullanılır; yalnız kaleci paketi varsa `ArenaWithGoalie.unity` kullanılır.
 4. Sahneyi yeniden üretmek için `Penalty Arena → 01 — Sahneyi yeniden oluştur`. Bu işlem yalnızca üretilen Arena sahnesini yeniler; sahnede elle yaptığın değişiklikleri önce farklı adla kaydet.
 
 ## İnternet üzerinden iki tablet
 
-Unity Services proje bağlantısı henüz yapılmadı; boş `cloudProjectId` ile internet odası çalışmaz.
+Yerel proje, kullanıcının hesabında oluşturulan **Kaleci** Unity Cloud projesine bağlandı. Kullanıcının seçimiyle hedef kitle **çocuklara yönelik** olarak işaretlendi. Reklam, Analytics, ek kimlik sağlayıcısı veya ücretli abonelik etkinleştirilmedi.
 
-1. Unity Editor → Edit → Project Settings → Services altında kendi Unity Cloud projenle bağlantı kur. Uygun mevcut proje kullan veya hesabında bu oyun için proje oluştur.
+1. Bu kurulumda Cloud bağlantısı hazır. Repoyu başka bir hesapla kullanıyorsan Unity Editor → Edit → Project Settings → Services üzerinden kendi Cloud projenle bağla.
 2. Unity Dashboard'da Authentication (Anonymous) ve Multiplayer/Relay erişimini kontrol et. Bu çalışma ücretli servis veya abonelik etkinleştirmedi.
 3. `Penalty Arena → 02 — Android APK oluştur` komutunu kullan. Çıktı: `Builds/PenaltiArena-dev.apk`.
 4. APK'yı iki tablete kur. İlk cihazda oyuncu adını yazıp **Oda oluştur**; ikinci cihazda kodu yazıp **Katıl**.
 5. İki oyuncu da **Hazırım** demeden maç başlamaz. Host kolay modu oda ekranında belirler; iki tarafa aynı top hızı uygulanır.
 6. Her şutta roller değişir. Herkes beş şut çeker, eşitlikte karşılıklı ek atış yapılır. Rövanş iki onay ister.
 
-Port yönlendirme gerekmez; internet yolu Multiplayer Services Session + Relay kullanır. Kimlik doğrulama anonimdir. Gizli anahtar kaynak koda yazılmadı. Relay bağlantısı ve hesap ayarları henüz uçtan uca doğrulanmadı.
+Port yönlendirme gerekmez; internet yolu Multiplayer Services Session + Relay kullanır. Kimlik doğrulama anonimdir. Gizli anahtar kaynak koda yazılmadı. Bağlantı testinin kapsamı ve sonucu `Docs/verification.md` içinde kayıtlıdır.
 
 ## Kontroller
 
@@ -49,10 +49,10 @@ Otomatik iki süreç testi: development macOS uygulamasına `-arena-smoke-host` 
 
 ## Mevcut eksikler
 
-- Super Goalie karakter/top görselleri ve kaleci animasyonları içe aktarıldı. KCISA stadyumu hesapta var, ancak indirilmediği için henüz entegre değil.
-- Kaleci artık Super Goalie humanoid modeli; bekleme ve merkez/sağ/sol kurtarış pozları bağlı. Şutçu hâlâ geçici geometri. Şut, yere iniş ve ayağa kalkış geçişleri ile premium malzemeler tamamlanmadı. Kaleci görsel pozu ile basit fizik collider’larının tam hizalanması henüz yapılmadı.
-- Stadyum geçici; KCISA dönüşümü, model/doku optimizasyonu, LOD, baked lighting tamamlanmadı.
-- Blender kale modeli hazır; sahne şu anda aynı ölçülerde Editor tarafından üretilen geçici kale kullanır.
+- Super Goalie karakter/top görselleri ve kaleci animasyonları ile KCISA stadyumunun seçilmiş parçaları entegre edildi. Sanat yönetimi hâlâ geliştirme aşamasında.
+- Kaleci artık Super Goalie humanoid modeli; bekleme ve merkez/sağ/sol kurtarış pozları bağlı. Şutçu aynı humanoid modelin açık formalı geçici uyarlamasıdır; bekleme animasyonu vardır. Gerçek şut animasyonu, yere iniş ve ayağa kalkış geçişleri ile premium malzemeler tamamlanmadı. Kaleci görsel pozu ile basit fizik collider’larının tam hizalanması henüz yapılmadı.
+- KCISA tribünleri ve iç yapısı URP materyalleriyle çim sahaya uyarlandı. 3.442 koltuk sadeleştirilip 45 bölgeye birleştirildi; dokular en fazla 1024 px. Son LOD, seyirci, baked lighting ve cihaz profili çalışmaları tamamlanmadı.
+- Stadyum sahnesinde Blender kale modeli kullanılır. Birleşik file kaleci kamerasında gizlenir; fizik collider’ları korunur.
 - Sinematik açılış videosu, özel sesler, file deformasyonu, replay ve son arayüz tasarımı eklenmedi.
 - Gerçek cihazda dokunma, farklı en-boy oranları, 30/60 FPS ölçümleri yapılmadı.
 - İnternet gecikmesi telafisi/lag compensation yok; katılan oyuncu bir ağ turu kadar dezavantaj yaşayabilir. Sıfır gecikme iddiası yok.
@@ -76,4 +76,15 @@ Bu repo herkese açıktır. Asset Store paketlerinin model/doku/animasyon dosyal
 
 İçe aktarma aracı mevcut farklı dosyaları ezmez. Paket indirme, lisans edinme veya hesap girişi yapmaz. `Arena.unity` temel sahnesi korunur. Kalecili sahne ve türetilen paket dosyaları yerelde kalır. Android build komutu isteğe bağlı paketin varlığına göre uygun sahneyi seçer. Her iki cihazda aynı sürümü kullan.
 
-KCISA stadyum paketi yerel bilgisayara indirildi; sahneye entegrasyonu henüz yapılmadı.
+### KCISA stadyumunu geri yükleme
+
+1. Kendi Unity hesabınla KCISA Olympic Park Handball Stadium paketini indir.
+2. `python3 Tools/import_kcisa.py "/paketin/tam/yolu/kcisa - Olympic Park Handball Stadium.unitypackage"` çalıştır.
+3. Unity'de `Assets → Refresh`, ardından gerekirse `Penalty Arena → 05 — KCISA stadyumunu entegre et` seç.
+4. `ArenaStadium.unity` oluşur. Önceki sahneler korunur; açık sahnede kaydedilmemiş değişiklik varsa araç durur.
+
+Araç yalnız seçilmiş modelleri, materyalleri ve renk dokularını getirir. Kaynak paketi değiştirmez. Mevcut farklı model/dokuları ezmez; Unity'nin güncellediği materyalleri ve `.meta` dosyalarını korur. Paket kaynakları, yerleşim verisi, türetilmiş materyal/animasyon/mesh ve stadyum sahnesi Git dışındadır.
+
+### Ağ testi
+
+macOS development build sonrasında `python3 Tools/run_network_smoke.py` iki süreçle loopback testi yapar. `python3 Tools/run_network_smoke.py --relay` bağlı Cloud projesinde geçici özel oda açar; iki ayrı anonim profil kullanır. İki süreçte de 10 atışın `5:0` / `GGGGG/DDDDD` sonucunu doğrular ve test oturumundan ayrılır. Günlükler Git dışındaki `Logs` klasöründedir. Bu testler fiziksel Android cihaz performansını ölçmez.

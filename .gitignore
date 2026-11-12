@@ -20,6 +20,12 @@ Recordings/
 # User-owned Asset Store packages and derived raw assets stay local.
 /Assets/SuperGoalie/
 /Assets/SuperGoalie.meta
+/Assets/HandballStadium/
+/Assets/HandballStadium.meta
+/Assets/Penalty/Art/Stadium/
+/Assets/Penalty/Art/Stadium.meta
+/Assets/Penalty/Scenes/ArenaStadium.unity
+/Assets/Penalty/Scenes/ArenaStadium.unity.meta
 /Assets/Penalty/Art/Goalie/
 /Assets/Penalty/Art/Goalie.meta
 /Assets/Penalty/Scenes/ArenaWithGoalie.unity
@@ -31,6 +37,7 @@ Recordings/
 /Docs/goalie-*.png
 /Docs/goalie-*.txt
 /Docs/goalie-*.done
+/Docs/stadium-*
 
 # Local service credentials and signing material
 .env

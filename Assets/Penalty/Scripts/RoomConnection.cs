@@ -74,7 +74,16 @@ namespace PenaltyArena
         }
         async Task Initialize()
         {
-            if (UnityServices.State != ServicesInitializationState.Initialized) await UnityServices.InitializeAsync();
+            if (UnityServices.State != ServicesInitializationState.Initialized) {
+                var options=new InitializationOptions();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                // Separate local test processes must not reuse the same anonymous player.
+                var args=Environment.GetCommandLineArgs();
+                if(Array.IndexOf(args,"-arena-relay-host")>=0)options.SetProfile("arena-smoke-host");
+                else if(Array.IndexOf(args,"-arena-relay-client")>=0)options.SetProfile("arena-smoke-client");
+#endif
+                await UnityServices.InitializeAsync(options);
+            }
             if (!AuthenticationService.Instance.IsSignedIn) await AuthenticationService.Instance.SignInAnonymouslyAsync();
         }
         public async void Open(bool host, string code)

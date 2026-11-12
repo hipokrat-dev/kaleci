@@ -11,6 +11,7 @@ namespace PenaltyArena
         public Rigidbody ball;
         public Transform keeper, striker;
         public Camera gameCamera;
+        public Renderer[] goalNet = Array.Empty<Renderer>();
         public RoomConnection room;
         public MatchSnapshot View { get; private set; } = new MatchSnapshot();
         public MatchPhase Phase => (MatchPhase)View.phase;
@@ -149,12 +150,19 @@ namespace PenaltyArena
             }
             bool inMatch = room.Connected && Phase != MatchPhase.Lobby && Phase != MatchPhase.Disconnected;
             bool goalie = inMatch && !Shooting;
-            Vector3 cameraPos = goalie ? new Vector3(1.1f, 2.8f, -3.6f) : new Vector3(-1.7f, 2.4f, 15.5f);
-            Vector3 look = goalie ? new Vector3(0, .75f, 10) : new Vector3(0, 1.1f, 0);
+            SetGoalNetVisible(!goalie);
+            Vector3 cameraPos = goalie ? new Vector3(0, 1.4f, -3f) : new Vector3(0, 1.6f, 15.5f);
+            Vector3 look = goalie ? new Vector3(0, .85f, 10) : new Vector3(0, -1, 0);
             gameCamera.transform.position = Vector3.Lerp(gameCamera.transform.position, cameraPos, 1 - Mathf.Exp(-5 * Time.deltaTime));
             gameCamera.transform.rotation = Quaternion.Slerp(gameCamera.transform.rotation, Quaternion.LookRotation(look - gameCamera.transform.position), 1 - Mathf.Exp(-5 * Time.deltaTime));
             ReadInput();
         }
+        // The keeper camera sits behind the goal; hide only its visual net, preserving collisions.
+        public void SetGoalNetVisible(bool visible)
+        {
+            foreach(var renderer in goalNet)if(renderer!=null)renderer.enabled=visible;
+        }
+        public float ScreenDirectionToWorld(float x) => x * (gameCamera.transform.right.x >= 0 ? 1 : -1);
         void ReadInput()
         {
             if (!room.Connected || Stale || !(Phase == MatchPhase.Aiming || Phase == MatchPhase.Flying)) return;
@@ -171,16 +179,16 @@ namespace PenaltyArena
             }
             if (gesture && (held || up)) {
                 Vector2 delta = (pos - gestureStart) / Screen.height;
-                Aim = new Vector2(Mathf.Clamp(delta.x * 14, -4.8f, 4.8f), Mathf.Clamp(delta.y * 6, .15f, 3.6f)); Power = Mathf.Clamp01(delta.magnitude / .5f);
+                Aim = new Vector2(Mathf.Clamp(ScreenDirectionToWorld(delta.x) * 14, -4.8f, 4.8f), Mathf.Clamp(delta.y * 6, .15f, 3.6f)); Power = Mathf.Clamp01(delta.magnitude / .5f);
                 if (up) {
                     if (Shooting && delta.magnitude > .035f) room.Send(new PlayerCommand { action = "shoot", shotId = View.shotId, x = Aim.x, y = Aim.y, power = Power });
-                    else if (!Shooting) room.Send(new PlayerCommand { action = "dive", shotId = View.shotId, x = delta.magnitude < .035f ? 0 : -Mathf.Clamp(delta.x * 8, -1, 1), y = Mathf.Clamp01(delta.y * 8) });
+                    else if (!Shooting) room.Send(new PlayerCommand { action = "dive", shotId = View.shotId, x = delta.magnitude < .035f ? 0 : Mathf.Clamp(ScreenDirectionToWorld(delta.x) * 8, -1, 1), y = Mathf.Clamp01(delta.y * 8) });
                     gesture = false;
                 }
             }
             var key = Keyboard.current;
             if (!Shooting && key != null && (key.leftArrowKey.wasPressedThisFrame || key.rightArrowKey.wasPressedThisFrame || key.spaceKey.wasPressedThisFrame))
-                room.Send(new PlayerCommand { action = "dive", shotId = View.shotId, x = key.leftArrowKey.wasPressedThisFrame ? 1 : key.rightArrowKey.wasPressedThisFrame ? -1 : 0, y = key.upArrowKey.isPressed ? 1 : 0 });
+                room.Send(new PlayerCommand { action = "dive", shotId = View.shotId, x = ScreenDirectionToWorld(key.leftArrowKey.wasPressedThisFrame ? -1 : key.rightArrowKey.wasPressedThisFrame ? 1 : 0), y = key.upArrowKey.isPressed ? 1 : 0 });
         }
     }
 }
