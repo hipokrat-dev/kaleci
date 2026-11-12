@@ -1,0 +1,5 @@
+2026-11-12
+Super Goalie restore tool tested with the downloaded package in a temporary project.
+80 files imported; repeat added 0 files.
+No ProjectSettings, Packages or scripts imported.
+Existing modified FBX was preserved and rejected for overwrite.
