@@ -46,3 +46,11 @@ Resmi API referansları:
 ## Gece sahnesi — 12 Kasım 2026
 
 Bağımsız çim ve şeffaf 4×4 seyirci atlası yerleşik image_gen ile bu proje için üretildi; `Assets/Penalty/Art/Lookdev` içinde repoya eklenir. Seyirciler tribün katlarında 24 mekânsal gruba ayrılmış kesit yüzeyleridir. Referans görselleri arka plan olarak kullanılmaz. Super Goalie yüz dokusu UV düzeni korunarak ayrıntılandırıldı; bu türev yerelde kalır. Forma/saç meshleri de kaynak iskelete uyarlandığı için Presentation dizini ve ArenaNight sahnesi public Git dışında tutulur. KCISA dış çatı halkası kullanılır; futbol tribünü, saçak, yeni kale/file, saha çizgileri ve projektör yerleşimi Editor koduyla üretilir. Yönergeler ve çıktı yolları: [art-direction.md](art-direction.md).
+
+
+## Arayüz yazı tipleri — 12 Kasım 2026
+
+- [Cinzel, Google Fonts kaynağı](https://github.com/google/fonts/tree/main/ofl/cinzel): Natanael Gama / Cinzel Project Authors. `Cinzel[wght].ttf` değişken dosyasından sabit 600 SemiBold ağırlığı.
+- [Manrope, Google Fonts kaynağı](https://github.com/google/fonts/tree/main/ofl/manrope): Manrope Project Authors. `Manrope[wght].ttf` değişken dosyasından sabit 500 Medium ağırlığı.
+- İkisi de SIL Open Font License 1.1. Kaynak OFL metinleri, telif bildirimleri ve kullanılan sabit TTF dosyaları `Assets/Penalty/Resources/Fonts` içinde birlikte dağıtılır. Bunlar Asset Store paketlerinden gelmez.
+- Sabitleme: fontTools 4.68.0 `instantiateVariableFont(font, {"wght": weight}, inplace=False)`. Aile adları korunur; name tablosunda 2/17 (alt aile), 4 (tam ad), 6 (PostScript ad) sabit ağırlığa göre güncellenir. Türkçe `ÇçĞğİıÖöŞşÜü` karakter kapsamı Unity'de doğrulanır.

@@ -32,6 +32,9 @@ namespace PenaltyArena
         bool dived, touched, gesture;
         int diveCode;
         Vector2 gestureStart;
+        float authoredFieldOfView;
+        public static float FitVerticalFieldOfView(float vertical,float aspect)=>aspect>=16f/9?vertical:2*Mathf.Atan(Mathf.Tan(vertical*Mathf.Deg2Rad*.5f)*(16f/9)/Mathf.Max(.5f,aspect))*Mathf.Rad2Deg;
+        public void UpdateCameraFraming(){if(authoredFieldOfView<=0)authoredFieldOfView=gameCamera.fieldOfView;gameCamera.fieldOfView=FitVerticalFieldOfView(authoredFieldOfView,gameCamera.aspect);}
         public Vector2 Aim { get; private set; }
         public float Power { get; private set; }
         public bool Aiming => gesture && Shooting;
@@ -170,6 +173,7 @@ namespace PenaltyArena
                 ball.transform.rotation = Quaternion.Slerp(ball.transform.rotation, View.ballRotation, blend);
                 if(keeperMotion==null)keeper.position = Vector3.Lerp(keeper.position, View.keeper, blend);
             }
+            UpdateCameraFraming();
             bool inMatch = room.Connected && Phase != MatchPhase.Lobby && Phase != MatchPhase.Disconnected;
             bool goalie = inMatch && !Shooting;
             SetGoalNetVisible(!goalie);
@@ -193,6 +197,8 @@ namespace PenaltyArena
         void ReadInput()
         {
             if (!room.Connected || Stale || !(Phase == MatchPhase.Aiming || Phase == MatchPhase.Windup || Phase == MatchPhase.Flying)) return;
+            var ui = GetComponent<ArenaUI>();
+            if(ui!=null && ui.SettingsVisible){gesture=false;return;}
             Vector2 pos = Vector2.zero; bool down = false, held = false, up = false;
             if (Touchscreen.current != null && (Touchscreen.current.primaryTouch.press.isPressed || Touchscreen.current.primaryTouch.press.wasReleasedThisFrame)) {
                 var touch = Touchscreen.current.primaryTouch; pos = touch.position.ReadValue(); down = touch.press.wasPressedThisFrame; held = touch.press.isPressed; up = touch.press.wasReleasedThisFrame;
@@ -200,7 +206,6 @@ namespace PenaltyArena
             if (down) {
                 bool field = pos.y > Screen.height * .16f && pos.y < Screen.height * .83f && pos.x < Screen.width * .92f;
                 Vector2 ballScreen = gameCamera.WorldToScreenPoint(ball.position);
-                var ui = GetComponent<ArenaUI>();
                 field = field && (ui == null || !ui.BlocksInput(pos));
                 gesture = field && (!Shooting || (Phase == MatchPhase.Aiming && Vector2.Distance(pos, ballScreen) < Screen.height * .16f)); gestureStart = pos;
             }

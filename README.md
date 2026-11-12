@@ -1,6 +1,6 @@
 # Kaleci — Penaltı Arena
 
-İki Android tablet için internet üzerinden özel odalı 3D penaltı oyunu. Tek kişilik mod yoktur. Gece stadyumu, seyirciler ve referans renklerinde formalar eklendi. Bu sürüm geliştirme prototipidir; referanslardaki fotogerçekçi karakter kalitesine henüz ulaşmadı.
+İki Android tablet için internet üzerinden özel odalı 3D penaltı oyunu. Tek kişilik mod yoktur. Gece stadyumu, seyirciler, referans renklerinde formalar ve siyah-altın maç arayüzü eklendi. Bu sürüm geliştirme prototipidir; referanslardaki fotogerçekçi karakter kalitesine henüz ulaşmadı.
 
 ## Açılış
 
@@ -27,7 +27,7 @@ Port yönlendirme gerekmez; internet yolu Multiplayer Services Session + Relay k
 - Şutçu: Topun ekran üzerindeki yakınından başlayıp yukarı/çapraza kaydır ve bırak. Uzunluk güç, yön hedef; yüksek güç/kenara hedef dışarı çıkabilir. Hedef yalnızca kendi ekranındadır.
 - Kaleci: Sağa/sola/çapraza kaydır; kısa dokunuş merkezde kalır. Editor'de ok tuşları; yukarı oku ile yüksek uzanma, boşluk merkez.
 - Fare sürüklemesi dokunmayla aynı işi yapar.
-- Ayarlar maçı durdurmaz. 30/60 FPS seçimi bulunur; cihaz performans garantisi değildir.
+- Ayarlar maçı durdurmaz; açıkken sahaya girdi gönderilmez. 30/60 FPS ve ses düzeyi seçimi bulunur; cihaz performans garantisi değildir.
 
 ## Mimari
 
@@ -55,7 +55,7 @@ Otomatik iki süreç testi: development macOS uygulamasına `-arena-smoke-host` 
 - Şutçu için yaklaşma, geriye salınım, ayak–top teması ve takip hareketi üretildi. Kalecinin dokuz kurtarışı iniş, ayağa kalkış ve merkeze dönüş içerir; el/gövde/uzuv collider’ları kemikleri izler. Karakter modelleri hâlâ aynı Super Goalie modelinin iki forma uyarlamasıdır; nihai karakter ve sanat kalitesi değildir.
 - KCISA tribünleri ve iç yapısı URP materyalleriyle çim sahaya uyarlandı. 3.442 koltuk sadeleştirilip 45 bölgeye birleştirildi; dokular en fazla 1024 px. Gece sahnesinde dış çelik çatı halkası korunur; yeni üç katlı tribün ve 24 bölgeye ayrılmış seyirci kesitleri kullanılır. Baked lighting ve gerçek cihaz profili tamamlanmadı.
 - Stadyum sahnesinde Blender kale modeli; gece sahnesinde aynı ölçüde yeni görsel kale/file kullanılır. Birleşik file kaleci kamerasında gizlenir; fizik collider’ları korunur.
-- Sinematik açılış videosu, özel sesler, file deformasyonu, replay ve son arayüz tasarımı eklenmedi.
+- Siyah-altın skor tablosu, atış göstergeleri, güç çubuğu ve oda/sonuç menüleri eklendi. Arayüz ve kamera 16:9, 4:3 ve geniş ekranda masaüstü uygulamasında kontrol edildi. Sinematik açılış videosu, özel sesler, file deformasyonu ve replay eklenmedi.
 - Gerçek cihazda dokunma, farklı en-boy oranları, 30/60 FPS ölçümleri yapılmadı.
 - Animasyonlar ortak ağ saatiyle örneklenir; katılan kalecinin yerel hareketi hemen gösterilir. Host fizik doğrulamasında geriye sarma yoktur; gecikme hâlâ kurtarış zamanlamasını etkileyebilir.
 - Host migration yok. Kopmada kazanan ilan edilmez; odadan çıkıp yeni bağlantı kurulur.

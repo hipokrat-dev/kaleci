@@ -36,7 +36,8 @@ namespace PenaltyArena.Editor
                 else if(command=="look-preview")PremiumArena.Preview();
                 else if(command=="look-reimport")PremiumArena.Reimport();
                 else if(command=="look-verify")PresentationChecks.Run();
-                else if(command=="look-package"){RuleChecks.Run();MotionChecks.Run();PresentationChecks.Run();ArenaBuilder.BuildMac();ArenaBuilder.BuildAndroid();}
+                else if(command=="ui-mac"){InterfaceChecks.Run();ArenaBuilder.BuildMac();}
+                else if(command=="look-package"){InterfaceChecks.Run();RuleChecks.Run();MotionChecks.Run();PresentationChecks.Run();ArenaBuilder.BuildMac();ArenaBuilder.BuildAndroid();}
                 else throw new Exception("Unknown motion command: "+command);
                 File.WriteAllText("Docs/motion-"+command+".done",DateTime.UtcNow.ToString("O"));
             } catch(Exception e) {File.WriteAllText("Docs/motion-error.txt",e.ToString());Debug.LogException(e);}

@@ -4,6 +4,8 @@
 
 Kalecide orta, sol ve sağ için alçak/orta/yüksek dokuz kurtarış vardır. Kaynak paketin tam klipleri iniş ve kalkış için kullanılır; yalnız başlangıç pozunda bekletilmez. Uzanma süresi `diveDuration`, elin yana erişimi `diveReach` üzerinden ayarlanır. Merkeze dönüş adımlarıyla toplam süre varsayılan ayarda 3,25 saniyedir. Yeni atış, sonuç gösterimi ve devam eden kurtarış tamamlanmadan başlamaz.
 
+Bekleme duruşları da üretilir: şutçunun elleri bel hizasının altında, göğsü 2,4 saniyelik kapalı nefes döngüsündedir. Vuruş sırasında kollar denge pozuna geçer ve toparlanmada geri iner. Kalecinin elleri gövdenin önünde hazır tutulur. Dokuz kurtarışın erişim noktaları ve ayak–top temas zamanı korunur; başlangıç/son poz, nefes döngüsü ve el konumları ek kontrollerle doğrulanır.
+
 Host aynı FixedUpdate içinde kemik eğrilerini örnekler, el/kafa kürelerini ve kol/bacak/gövde kapsüllerini günceller, ardından fiziği ilerletir. Eski sabit karakter collider’ları animasyonlu sahneden kaldırılır. Gerçek el teması topu durdurabilir veya saptırabilir; temas eden top yine çizgiyi geçerse gol sayılır. Diğer oyuncu görsel eğrileri aynı saatten örnekler. Kendi kalecisinin hareketi, onay beklerken kısa süre yerel olarak gösterilir; sonuç yetkisi hostta kalır. Fizikte gecikme için geriye sarma uygulanmaz.
 
 `MotionAuthoring.Bake` kaynak humanoid klipleri mevcut avatar üstünde örnekleyerek 30 Hz generic kemik eğrileri oluşturur. Eğriler pozisyon ve quaternion içerir; quaternion işaret sürekliliği korunur. Runtime Animator kapatılır, böylece iki sistem aynı kemikleri sürmez. Ayağın temas karesi ayrıca örneklenir. Kaynak paket ve önceki sahneler korunur. Üretilen rig bağımlı klipler ve sahne yereldir.

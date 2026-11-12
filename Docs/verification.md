@@ -1,15 +1,15 @@
 # Doğrulama — 12 Kasım 2026
 
-## Gece sahnesinin güncel doğrulaması
+## Güncel oyuncu ve arayüz teslimi
 
-- `ArenaNight.unity` için 70 ek kontrol geçti: shader derlemesi/desteği, eksiksiz materyaller, kaydedilmiş dört renk/ışık efekti, iki kameranın kaydırma yönü, topun dokunma bölgesi, şut teması, dokuz kurtarışın erişim ve el/head collider hizası, saç/karakter iskelet bağları.
-- 28 oyun kuralı ve 1.235 hareket kontrolü yeni paket öncesinde yeniden geçti.
-- Çevre geometrisi 157.452 üçgen, 49 mesh renderer; karakter meshleriyle toplam 65 renderer. Önceki KCISA uyarlamasında çevre yaklaşık 1,19 milyon üçgendi. Bu sayılar fiziksel tablet FPS ölçümü değildir.
-- Son gece sahnesiyle macOS development ve Android IL2CPP ARM64 derlemeleri başarılı. Yeni APK: `Builds/PenaltiArena-dev.apk`, 67.848.973 byte (64,7 MiB).
-- APK SHA-256: `ffa47e78ee8f5140b0cca00d8b7523a3421032637d1bd8cd3af002237c40ec79`.
-- Derlenmiş macOS uygulamasından GPU skinning ve post processing etkin şekilde şutçu, kaleci ve uzanma pozu ekran görüntüleri alındı. `PRESENTATION_PLAYER_CAPTURE_OK`; `Docs/presentation-runtime/`. Bu kareler poz incelemesidir, oynanmış maç kaydı değildir. Son projektör parlaması bu uygulama çıktısına göre azaltıldı.
-- Son gece derlemesinde `python3 Tools/run_network_smoke.py --relay --motion` geçti. İki ayrı uygulama gerçek Relay üzerinden `score=1:0 history=GKKKK/DDDDD winner=0 shots=10` sonucunu aldı; iki süreç exit code 0. Her iki uygulamada `MOTION_PHYSICS_OK` doğrulandı. Bu, iki fiziksel tablet testi değildir.
-- Yeni sahnenin kaynakları ve yeniden oluşturma adımları: [art-direction.md](art-direction.md).
+- Siyah-altın HUD ve oda/maç sonu menüleri; Türkçe Cinzel/Manrope yazı tipleri, özel hedef halkası ve güç çubuğu tamamlandı. Şutçunun kolları aşağıda bekleme/nefes döngüsü, kalecinin önde hazır eldivenleri, forma ayrıntıları ve şutçunun bilek birleşimi güncellendi.
+- Yeni paket öncesinde 28 oyun kuralı, 1.238 hareket, 70 sahne ve 65 arayüz kontrolü geçti. Arayüz kontrolleri Türkçe karakterleri, 16:9/4:3/geniş ekran/güvenli alan koordinatlarını ve kamera açısını kapsar.
+- macOS development ve Android IL2CPP ARM64 derlemeleri başarılı. APK: `Builds/PenaltiArena-dev.apk`, 83.629.845 byte (79,8 MiB).
+- APK SHA-256: `6e43570d14ab0df7dabdf71592c114cbbb21a06fb444a242313689e8b09ecc3d`.
+- Derlenmiş uygulamadan GPU skinning ve post processing ile dokuz görüntü alındı: ana menü, şutçu, kaleci, kurtarış, sonuç, ayarlar, maç sonu, 4:3 ve geniş ekran. `PRESENTATION_UI_CAPTURE_OK`; `Docs/presentation-ui/`. Bu görüntülerdeki 2:1 skor örnek veridir ve **ÖNİZLEME** etiketi taşır; oynanmış maç sonucu değildir. Görüntülerde bilek birleşimi ve yukarı kaydırma oku son kez kontrol edildi. Çalışma günlüğünde exception yok.
+- Son derlemede `python3 Tools/run_network_smoke.py --relay --motion` geçti. İki ayrı uygulama gerçek Relay üzerinden `score=1:0 history=GKKKK/DDDDD winner=0 shots=10` sonucunu aldı; iki süreç exit code 0. İkisinde de `MOTION_PHYSICS_OK` doğrulandı ve exception kaydı yok. Bu test iki fiziksel tablette yapılmadı.
+- Çevre geometrisi 157.452 üçgen, 49 mesh renderer; karakterlerle toplam 65 renderer. Önceki KCISA uyarlamasında çevre yaklaşık 1,19 milyon üçgendi. Bunlar tablet FPS ölçümü değildir.
+- Yeni sahnenin kaynakları ve yeniden oluşturma adımları: [art-direction.md](art-direction.md). Ham Asset Store varlıkları ve paketlere bağlı türevler public Git dışında tutulur.
 
 ## Geçen kontroller
 
@@ -28,7 +28,7 @@
 
 - `ArenaAnimated.unity`: 2,4 saniyelik şut; temas 0,58 saniye. Gerçek kemik ölçümünde ayak ucu ile topun arka yüzeyi arasında 1 cm, ayakkabı tabanı ile zemin arasında yaklaşık 1 mm var.
 - Dokuz kurtarış; uzanma, iniş, kalkış ve merkeze dönüş. Sağ/sol el erişimi 2,9 m. Eski sabit collider’lar kaldırıldı; 9 kapsül ve 3 küre kemiklerden güncellenir.
-- `MotionChecks`: 1.235 kontrol geçti. Tüm kliplerde 50 ms aralıklarla geçerli poz ve zemin kontrolü; el erişimi, collider hizası, şut teması ve başlangıca dönüş kontrolü.
+- `MotionChecks`: güncel duruşlarla 1.238 kontrol geçti. Tüm kliplerde 50 ms aralıklarla geçerli poz ve zemin kontrolü; el erişimi, collider hizası, şut teması ve başlangıca dönüş kontrolü.
 - İki development player içinde dokuz el pozu gerçek PhysX çarpışmasıyla test edildi; ters taraftaki şutun geçmesi de doğrulandı (`MOTION_PHYSICS_OK`).
 - Şut, alçak/orta/yüksek uzanmalar ve toparlanma Unity kamera karelerinde görsel olarak incelendi. Yerel video: `Docs/motion-preview.mp4` (7 saniye). Bu video hareket önizlemesidir; önizleme topunun yörüngesi sunum amaçlıdır. Fizik sonuçları oyuncu uygulamalarındaki ayrı testlerden gelir.
 - Şut tekrar komutu Windup sırasında reddedilir; kaleci bu sırada hareket edebilir. İstemci hareket başlangıcını ortak ağ saatinden okur ve kendi kaydırmasını kısa süre yerel tahminle gösterir.
@@ -65,6 +65,6 @@ Bu güncel test loopback bağlantısı kullanmadı. Aynı bilgisayardan Relay'e 
 - Gerçek üçüncü istemcinin reddi; ağ gecikmesi/paket kaybı, arka plana alma ve kopma senaryoları.
 - İki istemciden rövanş onayı uçtan uca testi.
 - Hareketlerin gerçek tablet ekranında ve yüksek ağ gecikmesinde hissi; nihai karakter/mocap ve sanat iyileştirmesi.
-- Nihai arayüz/sesler, file tepkisi, seyirciler için gelişmiş LOD, baked lighting ve sinematik açılış.
+- Arayüzün gerçek cihaz dokunma/okunabilirlik testi, özel sesler, file tepkisi, seyirciler için gelişmiş LOD, baked lighting ve sinematik açılış.
 
 Bu sürüm teknik prototiptir; referanslardaki premium kaliteye ulaşılmış veya yayınlanabilir sayılmaz. Üçüncü taraf paket kaynakları, türetilmiş ham varlıklar ve stadyum sahnesi public Git dışında tutulur; yeniden oluşturma araçları repodadır.

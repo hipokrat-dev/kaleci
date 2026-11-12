@@ -13,6 +13,16 @@
 
 `PenaltyGame` kamera konumlarını sahneden okur. Yeni kadrajın topu dokunma alanında tuttuğu ve ekran sağının her iki rolde doğru dünya yönüne çevrildiği doğrulanır. Oyun kuralları ve ağ mesajları bu çalışma için değiştirilmedi.
 
+## Maç arayüzü ve oyuncu duruşları
+
+Siyah-altın skor levhası, beş atış göstergesi, tur sekmesi, bağlantı durumu, özel hedef halkası, güç çubuğu ve kaydırma simgeleri referans görsellerin düzenini izler. Sonuç noktalarında renk yanında işaret de vardır: gol onay işareti, kurtarış çizgi, dışarı çarpı. Özel oda, ana menü, maç sonu ve ayarlar aynı tipografi ve renkleri kullanır.
+
+Arayüz `Screen.safeArea` içinde 720 birim yüksekliğe ölçeklenir. Uzun Türkçe adlar alanlarına sığdırılır; dar ekranlarda bağlantı ve ayar düğmeleri skor levhasının altına taşınır. 4:3 kamera, 16:9 için yazılmış yatay kadrajı koruyacak kadar genişler; şutçu ve top kadrajda kalır. Ayarlar sahadaki dokunma/fare ve klavye girdisini engeller, çevrimiçi maçı durdurmaz.
+
+Şutçu beklerken kollarını indirir, göğsünde hafif ve kesintisiz 2,4 saniyelik nefes döngüsü vardır; vuruşa girerken kollar denge pozuna geçer. Kaleci eldivenlerini vücudunun önünde hazır tutar. Forma yanlarında hafif kırışıklık gölgesi, yaka şeridi ve küçük arma bulunur. Şutçunun el görünümü kaynak eldiven geometrisinin ten rengi ve avuç daraltmasıyla uyarlanmıştır; yeni anatomik el modeli değildir. Bilek birleşimi korunur.
+
+Başlıklar Cinzel SemiBold 600, metinler Manrope Medium 500 kullanır. Google Fonts değişken kaynaklarından fontTools 4.68.0 ile sabit ağırlık çıkarılmıştır; TTF dosyaları ve OFL lisansları `Assets/Penalty/Resources/Fonts` içindedir. Kaynaklar ve lisans kaydı: [ASSETS.md](ASSETS.md).
+
 ## Yeniden oluşturma
 
 Önce README'deki paket geri yükleme adımları ve `07 — Şut ve kurtarışları oluştur` tamamlanmalı. Ardından:
@@ -42,3 +52,5 @@ Yüz dosyası bulunmazsa araç orijinal paket dokusunu kullanır. Bağımsız ç
 `PremiumArena.Preview` iki rol ve yakın planlar için URP [SingleCameraRequest](https://docs.unity3d.com/6000.0/Manual/urp/User-Render-Requests.html) kullanır. Poz incelemesinde CPU `BakeMesh` kopyaları ile tutarlı kareler alınır. Development player'daki `-arena-look-capture <klasör>` isteğe bağlı doğrulama aracı ise gerçek GPU skinning ve ekran çıktısını alır; kullanıcıya sunulan oyun modu değildir.
 
 Yerel sonuçlar `Docs/presentation-*.png`, `Docs/presentation-runtime/`, `Docs/presentation-checks.txt` ve `Docs/presentation-build.txt` içinde bulunur. Cihaz performansı ancak Android tablet üzerinde ölçülebilir; masaüstü render veya bağlantı testi FPS garantisi vermez.
+
+`-arena-ui-capture <klasör>` development seçeneği, gerçek GPU skinning ve oyun arayüzünü birlikte kaydeder. Ana menü, iki rol, kurtarış, sonuç, ayarlar, maç sonu, 4:3 ve geniş ekran örneklerini üretir. Maç görsellerindeki 2:1 skor örnek veridir ve **ÖNİZLEME** olarak işaretlenir; oynanmış maç sonucu değildir. Yerel görüntüler: `Docs/presentation-ui/`. `InterfaceChecks.Run` Türkçe karakterleri, güvenli alan koordinatlarını ve ekran oranlarına göre kamera açısını denetler.

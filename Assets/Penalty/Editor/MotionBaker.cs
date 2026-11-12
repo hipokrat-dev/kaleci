@@ -54,10 +54,10 @@ namespace PenaltyArena.Editor
                     var bone=animator.GetBoneTransform((HumanBodyBones)i);
                     while(bone!=null && bone!=actor.transform){selected.Add(bone);bone=bone.parent;}
                 }
-                rig.bones=actor.GetComponentsInChildren<Transform>().Where(selected.Contains).ToArray();rig.Ground();
+                rig.bones=actor.GetComponentsInChildren<Transform>().Where(selected.Contains).ToArray();AuthorKeeperReady(rig,0);
                 rig.neutralPositions=rig.bones.Select(t=>t.localPosition).ToArray();rig.neutralRotations=rig.bones.Select(t=>t.localRotation).ToArray();
-                idle=BakeCurves(rig,"KeeperIdle",SourceClip(0).length,t=>{rig.Source("S0",t/SourceClip(0).length);rig.Ground();});
-                strikerIdle=BakeCurves(rig,"StrikerReady",1.2f,t=>AuthorStrike(rig,-1));
+                idle=BakeCurves(rig,"KeeperIdle",SourceClip(0).length,t=>AuthorKeeperReady(rig,t));
+                strikerIdle=BakeCurves(rig,"StrikerReady",2.4f,t=>{AuthorStrike(rig,-1);var chest=rig.Bone(HumanBodyBones.Chest);chest.rotation=Quaternion.AngleAxis(Mathf.Sin(t*Mathf.PI*2/2.4f)*.7f,Vector3.right)*chest.rotation;});
                 strike=BakeCurves(rig,"PenaltyStrike",MotionTiming.StrikeEnd,t=>AuthorStrike(rig,t));
                 for(int i=1;i<10;i++) {
                     int code=i;float sourceLength=SourceClip(i).length;
@@ -125,7 +125,12 @@ namespace PenaltyArena.Editor
             AnimationUtility.SetEditorCurves(clip,bindings,curves);clip.EnsureQuaternionContinuity();
             string path=Art+"/"+name+".anim";var existing=AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
             if(existing==null){AssetDatabase.CreateAsset(clip,path);return clip;}
-            EditorUtility.CopySerialized(clip,existing);Object.DestroyImmediate(clip);return existing;
+            EditorUtility.CopySerialized(clip,existing);EditorUtility.SetDirty(existing);Object.DestroyImmediate(clip);return existing;
+        }
+        static void AuthorKeeperReady(Rig r,float t)
+        {
+            r.Source("S0",t/SourceClip(0).length);
+            SolveArm(r,false,new Vector3(-.36f,.96f,.38f));SolveArm(r,true,new Vector3(.36f,.96f,.38f));r.Ground();
         }
         static void AuthorStrike(Rig r,float t)
         {
@@ -152,8 +157,9 @@ namespace PenaltyArena.Editor
                 var desired=new Vector3(.22f,.115f,.23f);
                 SolveLeg(r,true,Vector3.Lerp(foot.position,foot.position+desired-toe.position,contact));
             }
-            SolveArm(r,false,new Vector3(-.49f,1.12f+backswing*.12f,.10f-follow*.12f));
-            SolveArm(r,true,new Vector3(.46f,1.04f+follow*.16f,-.07f+follow*.16f));
+            float balance=t<0?0:MotionTiming.Smooth(0,.24f,t)*(1-MotionTiming.Smooth(1.25f,MotionTiming.StrikeEnd,t));
+            SolveArm(r,false,Vector3.Lerp(new Vector3(-.27f,.83f,.04f),new Vector3(-.49f,1.12f+backswing*.12f,.10f-follow*.12f),balance));
+            SolveArm(r,true,Vector3.Lerp(new Vector3(.28f,.82f,-.02f),new Vector3(.46f,1.04f+follow*.16f,-.07f+follow*.16f),balance));
             r.Ground();
         }
         static void AuthorSave(Rig r,int code,float t,float length)

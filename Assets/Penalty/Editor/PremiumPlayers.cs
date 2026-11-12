@@ -17,11 +17,18 @@ namespace PenaltyArena.Editor
                 foreach(var skin in rig.visual.GetComponentsInChildren<SkinnedMeshRenderer>()) {
                     skin.quality=SkinQuality.Bone4;skin.shadowCastingMode=ShadowCastingMode.On;skin.receiveShadows=true;
                     if(skin.name=="kit" || skin.name=="boots" || skin.name=="socks" || skin.name=="gloaves") {
-                        var material=Mat(prefix+skin.name,Color.white,skin.name=="boots"?.4f:.22f);material.SetFloat("_Mode",2);
+                        var material=Mat(prefix+skin.name,Color.white,skin.name=="boots"?.4f:.22f);material.SetFloat("_Mode",!keeper&&skin.name=="gloaves"?0:2);
                         string part=skin.name;
                         material.SetTexture("_BaseMap",Paint(skin,rig,p=>Garment(part,p,keeper),prefix+part));skin.sharedMaterial=material;
                         // Explicit colors make the procedural cloth shader independent of optional source channels.
-                        var mesh=Object.Instantiate(skin.sharedMesh);mesh.colors=Enumerable.Repeat(Color.white,mesh.vertexCount).ToArray();skin.sharedMesh=Save(mesh,prefix+part+".asset");
+                        var mesh=Object.Instantiate(skin.sharedMesh);
+                        if(!keeper&&part=="gloaves") {
+                            var vertices=mesh.vertices;
+                            // Keep the wrist seam intact; only taper the palm beyond its overlap with the forearm.
+                            for(int i=0;i<vertices.Length;i++){var p=rig.visual.InverseTransformPoint(skin.transform.TransformPoint(vertices[i]));var wrist=new Vector3(Mathf.Sign(p.x)*.61f,1.08f,.09f);float taper=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.64f,.71f,Mathf.Abs(p.x)));p=wrist+Vector3.Scale(p-wrist,new Vector3(1,1-.18f*taper,1-.25f*taper));vertices[i]=skin.transform.InverseTransformPoint(rig.visual.TransformPoint(p));}
+                            mesh.vertices=vertices;mesh.RecalculateNormals();mesh.RecalculateBounds();
+                        }
+                        mesh.colors=Enumerable.Repeat(Color.white,mesh.vertexCount).ToArray();skin.sharedMesh=Save(mesh,prefix+part+".asset");
                     } else {
                         var material=Object.Instantiate(skin.sharedMaterial);material.name=prefix+skin.name;
                         if(skin.name=="head" && File.Exists(Art+"/HeadDetail.png"))material.SetTexture("_BaseMap",AssetDatabase.LoadAssetAtPath<Texture2D>(Art+"/HeadDetail.png"));
@@ -34,7 +41,7 @@ namespace PenaltyArena.Editor
         static Color Garment(string part,Vector3 p,bool keeper)
         {
             Color navy=new Color(.018f,.032f,.055f),ivory=new Color(.84f,.85f,.81f),teal=new Color(.018f,.29f,.31f),gold=new Color(.55f,.42f,.19f);
-            if(part=="gloaves")return keeper?(Mathf.Abs(p.x)<.65f?navy:ivory):new Color(.25f,.13f,.075f);
+            if(part=="gloaves")return keeper?(Mathf.Abs(p.x)<.65f?navy:ivory):new Color(.35f,.21f,.135f);
             if(part=="socks") {
                 Color c=keeper?navy:ivory;if(p.y>.46f&&p.y<.49f || p.y>.51f&&p.y<.53f)c=keeper?ivory:navy;return c;
             }
@@ -49,13 +56,23 @@ namespace PenaltyArena.Editor
             if(!shorts && keeper) {
                 float stripe=Mathf.Sin((p.x*60+Mathf.Abs(p.y-1.35f)*45));color*=.93f+.07f*stripe;
             }
+            if(!shorts) {
+                float side=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.11f,.24f,Mathf.Abs(p.x)));
+                float fold=Mathf.Sin(p.y*74+Mathf.Abs(p.x)*19)*Mathf.Sin(p.y*33-p.x*16);
+                color*=1-side*.09f+fold*(.025f+side*.055f);
+                if(Mathf.Abs(p.x)>.365f&&Mathf.Abs(p.x)<.385f)color=keeper?navy:ivory;
+                if(p.y>1.586f&&p.y<1.596f)color=gold;
+            }
             float stitch=Mathf.Sin(p.x*450)*Mathf.Sin(p.y*450);color*=.97f+stitch*.025f;
             // Athletic numerals are painted in bind-pose coordinates onto the original UVs.
             if(p.z<.005f && p.y>1.23f && p.y<1.53f && Mathf.Abs(p.x)<.115f) {
                 float x=p.x/.23f+.5f,y=(p.y-1.23f)/.30f;
                 if(Digit(keeper?1:9,x,y))color=keeper?ivory:navy;
             }
-            if(p.z>.15f && (new Vector2((p.x+.105f)/.033f,(p.y-1.45f)/.043f)).sqrMagnitude<1)color=gold;
+            var crest=new Vector2((p.x+.105f)/.029f,(p.y-1.45f)/.037f);
+            if(p.z>.15f&&crest.y<1&&crest.y>-1&&Mathf.Abs(crest.x)<Mathf.Min(.82f,crest.y+1.02f)) {
+                color=gold;if(crest.y>-.65f&&crest.y<.7f&&Mathf.Abs(crest.x)<Mathf.Min(.57f,crest.y+.68f))color=navy;
+            }
             if(Mathf.Abs(p.x)>.35f && p.y>1.28f&&p.y<1.34f)color=keeper?navy:ivory;
             color.a=1;return color;
         }

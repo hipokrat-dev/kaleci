@@ -28,6 +28,12 @@ namespace PenaltyArena.Editor
                 var k=game.keeperMotion;var s=game.strikerMotion;
                 Require(k!=null&&s!=null,"Both rigs present");
                 Require(!k.visual.GetComponent<Animator>().enabled&&!s.visual.GetComponent<Animator>().enabled,"No competing Animator");
+                s.Evaluate(0,0,false,0,0);
+                Require(s.leftHand.position.y<s.hips.position.y+.10f&&s.rightHand.position.y<s.hips.position.y+.10f,"Relaxed hands in striker ready pose");
+                Vector3 readyHand=s.leftHand.position;s.idle.SampleAnimation(s.visual.gameObject,s.idle.length);
+                Require(Vector3.Distance(readyHand,s.leftHand.position)<.002f,"Striker breathing loop closes");
+                k.Evaluate(0,0,false,0,0);
+                Require(k.leftHand.position.z>k.hips.position.z+.20f&&k.rightHand.position.z>k.hips.position.z+.20f,"Keeper presents gloves in front");
                 s.Evaluate(0,0,true,MotionTiming.StrikeContact,0);
                 var rear=game.ball.position+Vector3.forward*.11f;
                 report.AppendLine("Shot toe="+s.rightToes.position.ToString("F4")+" rear="+rear.ToString("F4"));
