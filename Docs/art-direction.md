@@ -68,3 +68,7 @@ Yüz dosyası bulunmazsa araç orijinal paket dokusunu kullanır. Bağımsız ç
 Yerel sonuçlar `Docs/presentation-*.png`, `Docs/presentation-runtime/`, `Docs/presentation-checks.txt` ve `Docs/presentation-build.txt` içinde bulunur. Cihaz performansı ancak Android tablet üzerinde ölçülebilir; masaüstü render veya bağlantı testi FPS garantisi vermez.
 
 `-arena-ui-capture <klasör>` development seçeneği, gerçek GPU skinning ve oyun arayüzünü birlikte kaydeder. Ana menü, iki rol, kurtarış, sonuç, ayarlar, maç sonu, 4:3 ve geniş ekran örneklerini üretir. Maç görsellerindeki 2:1 skor örnek veridir ve **ÖNİZLEME** olarak işaretlenir; oynanmış maç sonucu değildir. Yerel görüntüler: `Docs/presentation-ui/`. `InterfaceChecks.Run` Türkçe karakterleri, güvenli alan koordinatlarını ve ekran oranlarına göre kamera açısını denetler.
+
+## 0.2.0 yüz ayrıntısı
+
+HeadDetail-v2 albedosundan imagegen ile düşük kontrastlı HeadRelief üretildi. Unity normal dönüşümü .012 yükseklik, .4 normal kuvveti ve 2048 üst sınır kullanır. Göz yüzeyi ve çevresindeki kapak geometrisi aynı bind-pose dönüşümüyle %17 sıkıştırılır; cilt shader’ında sakal parlaklığı azaltılır ve yüz alt gölgelerine hafif dolgu verilir. Gerçek oyuncu yakın planları `Docs/presentation-players-v3` altında incelendi. Bu işlem kaynak rig ve animasyonları korur; kaynak karakteri taranmış fotogerçekçi modele dönüştürmez.

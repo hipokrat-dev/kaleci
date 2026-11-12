@@ -15,8 +15,6 @@ namespace PenaltyArena
         public Transform leftHand,rightHand,leftFoot,rightFoot,rightToes,hips,head;
         public KeeperHitboxes hitboxes;
         public Vector3 home, contactRoot = new Vector3(.22f,0,11.35f);
-        int predictedCode;
-        double predictedAt = -100, acknowledgedAt = -100;
         Vector3[] blendPositions;
         Quaternion[] blendRotations;
         void Awake() { Initialize(); }
@@ -25,22 +23,12 @@ namespace PenaltyArena
             var animator=visual.GetComponent<Animator>();if(animator!=null)animator.enabled=false;
             if(blendPositions==null || blendPositions.Length!=bones.Length) {blendPositions=new Vector3[bones.Length];blendRotations=new Quaternion[bones.Length];}
         }
-        public void PredictDive(int code,double now)
-        {
-            if(!goalkeeper || game.room.Host || predictedCode!=0)return;
-            if(game.View.diveCode!=0 && now-game.View.diveStartedAt<MotionTiming.SaveLength(game.diveDuration))return;
-            predictedCode=code;predictedAt=now;acknowledgedAt=game.View.diveStartedAt;
-        }
         void LateUpdate()
         {
             // Host poses and colliders are sampled together immediately before its physics step.
             if(game==null || (game.room.Connected && game.room.Host))return;
             var v=game.View;double now=game.NetworkNow;
             int code=v.diveCode;float elapsed=code==0?-1:(float)(now-v.diveStartedAt);
-            if(predictedCode!=0) {
-                if(v.diveStartedAt!=acknowledgedAt || now-predictedAt>.5 || game.Phase==MatchPhase.Disconnected)predictedCode=0;
-                else {code=predictedCode;elapsed=(float)(now-predictedAt);}
-            }
             Evaluate(code,elapsed,v.shotStartedAt>0,(float)(now-v.shotStartedAt),now);
             if(hitboxes!=null)hitboxes.SetActive(false);
         }
@@ -48,7 +36,7 @@ namespace PenaltyArena
         {
             Initialize();
             if(goalkeeper) {
-                float t=MotionTiming.SaveTime(elapsed,game.diveDuration);
+                float t=MotionTiming.SaveTime(elapsed,game.CurrentDiveDuration);
                 actorRoot.position=home;
                 if(code<=0 || code>=saves.Length || elapsed<0 || t>=MotionTiming.SaveEnd)Sample(idle,(float)(clock%idle.length));
                 else {

@@ -4,17 +4,18 @@ namespace PenaltyArena
     public sealed class ArenaUI : MonoBehaviour
     {
         public PenaltyGame game;
-        string code="",address="127.0.0.1";bool settings;ArenaTheme theme;
+        string code="",address="127.0.0.1";bool settings,quitting;ArenaTheme theme;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         [System.NonSerialized] public MatchSnapshot captureView;
         [System.NonSerialized] public bool captureShooting,captureAiming,captureSettings;
 #endif
-        public static Rect SettingsRect(float width)=>new Rect(width-340,88,320,282);
+        public static Rect SettingsRect(float width)=>new Rect(width-340,88,320,478);
         public bool SettingsVisible=>settings;
         public static Rect MenuRect(float width)=>new Rect(width-68,width<940?112:16,48,48);
         public static Vector2 ToCanvas(Vector2 point,Rect safe){float scale=Mathf.Max(1,safe.height)/720;return new Vector2((point.x-safe.x)/scale,(safe.yMax-point.y)/scale);}
         public bool BlocksInput(Vector2 point){var safe=Screen.safeArea;float width=safe.width/(Mathf.Max(1,safe.height)/720);return settings||MenuRect(width).Contains(ToCanvas(point,safe));}
         void OnDestroy(){theme?.Dispose();}
+        void Update(){if(UnityEngine.InputSystem.Keyboard.current?.escapeKey.wasPressedThisFrame==true)settings=!settings;}
         void OnGUI()
         {
             if(theme==null)theme=new ArenaTheme();var safe=Screen.safeArea;float scale=Mathf.Max(1,safe.height)/720,width=safe.width/scale;
@@ -45,7 +46,8 @@ namespace PenaltyArena
             code=GUI.TextField(new Rect(x,449,280,48),code,12,theme.input);
             if(theme.Button(new Rect(x+294,449,170,48),"KATIL"))game.room.Open(false,code.Trim());GUI.enabled=true;
             theme.Label(new Rect(x,510,464,54),game.room.Status,theme.status);Divider(x,581,464);
-            if(theme.Button(new Rect(x+102,598,260,35),"Ses ve görüntü"))settings=!settings;
+            if(theme.Button(new Rect(x,598,222,35),"Ayarlar"))settings=!settings;
+            if(theme.Button(new Rect(x+242,598,222,35),"OYUNDAN ÇIK"))QuitGame();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             GUI.enabled=!settings;address=GUI.TextField(new Rect(16,672,190,32),address,theme.input);
             if(theme.Button(new Rect(216,672,136,32),"Yerel host"))game.room.Local(true);
@@ -76,7 +78,7 @@ namespace PenaltyArena
             theme.Name(new Rect(center-boardWidth*.5f+22,17,side,31),v.name0);theme.Name(new Rect(center+boardWidth*.5f-side-22,17,side,31),v.name1);
             theme.Label(new Rect(center-70,8,140,66),v.score0+" : "+v.score1,theme.score);
             DrawHistory(new Vector2(center-boardWidth*.5f+22+side*.5f,62),v.history0);DrawHistory(new Vector2(center+boardWidth*.5f-22-side*.5f,62),v.history1);
-            theme.Panel(new Rect(center-79,74,158,29),true);theme.Label(new Rect(center-76,75,152,26),v.shotId<10?(v.shotId/2+1)+". PENALTI":"EK ATIŞ "+(1+(v.shotId-10)/2),theme.caption);
+            theme.Panel(new Rect(center-79,74,158,29),true);theme.Label(new Rect(center-76,75,152,26),v.shotId<10?MatchRules.AttemptNumber(v.shotId)+" / 5 PENALTI":"EK ATIŞ "+(1+(v.shotId-10)/2),theme.caption);
             float badgeY=width<940?118:19;theme.Panel(new Rect(22,badgeY,176,35),true);
             for(int i=0;i<4;i++)ArenaTheme.Line(new Vector2(38+i*5,badgeY+25),new Vector2(38+i*5,badgeY+21-i*4),ArenaTheme.Gold,3);
             theme.Label(new Rect(61,badgeY+2,126,31),preview?"ÖNİZLEME":"ONLINE · "+v.count+"/2",theme.caption);
@@ -84,12 +86,22 @@ namespace PenaltyArena
             if(game.Stale&&!preview){theme.Panel(new Rect(center-174,118,348,35),true);theme.Label(new Rect(center-170,119,340,32),"Bağlantı bekleniyor…",theme.muted);}
             var phase=(MatchPhase)v.phase;if(phase==MatchPhase.Finished){DrawFinished(width,v,preview);return;}
             if(phase==MatchPhase.Result){theme.Panel(new Rect(center-160,199,320,77),true);theme.Label(new Rect(center-150,205,300,61),v.message,theme.heading);}
-            string instruction=phase==MatchPhase.Windup||phase==MatchPhase.Flying?(shooting?"VURUŞ YAPILIYOR":"KURTARMAK İÇİN KAYDIR"):(shooting?"ŞUT İÇİN KAYDIR":"KURTARMAK İÇİN KAYDIR");
-            theme.Panel(new Rect(center-177,628,354,40),true);theme.Label(new Rect(center-170,632,340,31),instruction,theme.caption);Gesture(new Vector2(center,698),shooting);
+            int localSlot=shooting?v.shooter:1-v.shooter;
+            bool locked=localSlot==0?v.locked0:v.locked1;
+            if(!preview)locked|=game.ChoiceLocked;
+            bool opponentLocked=localSlot==0?v.locked1:v.locked0;
+            string instruction=phase==MatchPhase.Windup?"İKİ SEÇİM HAZIR · BAŞLIYOR":phase==MatchPhase.Flying?"PENALTI OYNANIYOR":phase==MatchPhase.Result?"SONRAKİ ATIŞ HAZIRLANIYOR":locked?"SEÇİMİN KİLİTLENDİ":shooting?"HEDEF İÇİN KAYDIR VE BIRAK":"ATLAYIŞ YÖNÜNÜ SEÇ";
+            theme.Panel(new Rect(center-211,628,422,40),true);theme.Label(new Rect(center-205,632,410,31),instruction,theme.caption);
+            if(phase==MatchPhase.Aiming){
+                string detail=locked?"Rakibin seçimi bekleniyor…":opponentLocked?"Rakip hazır. Seçimini yap.":"İkiniz de seçince aynı anda başlarsınız.";
+                theme.Label(new Rect(center-260,674,520,27),detail,theme.muted);
+                string turn=(v.shooter==0?v.name0:v.name1)+" · "+(v.shotId<5?"İLK 5 ATIŞ":v.shotId<10?"İKİNCİ 5 ATIŞ":"EK ATIŞLAR");
+                theme.Label(new Rect(center-250,109,500,27),turn,theme.caption);
+            }
             if(shooting){
                 theme.Panel(new Rect(width-78,302,64,28),true);theme.Label(new Rect(width-78,302,64,26),"GÜÇ",theme.caption);
-                bool show=aiming||phase==MatchPhase.Windup||phase==MatchPhase.Flying;theme.Power(new Rect(width-64,337,36,190),show?power:0);
-                if(aiming){var aim=preview?new Vector2(-3,2.1f):game.Aim;var p=ToCanvas(game.gameCamera.WorldToScreenPoint(new Vector3(aim.x,aim.y,0)),safe);theme.Ring(p,17,ArenaTheme.Gold,2);theme.Disc(p,2,ArenaTheme.Ivory);}
+                bool show=aiming||locked||phase==MatchPhase.Windup||phase==MatchPhase.Flying;theme.Power(new Rect(width-64,337,36,190),show?power:0);
+                if(aiming||(locked&&phase==MatchPhase.Aiming)){var aim=preview?new Vector2(-3,2.1f):game.Aim;var p=ToCanvas(game.gameCamera.WorldToScreenPoint(new Vector3(aim.x,aim.y,0)),safe);theme.Ring(p,17,ArenaTheme.Gold,2);theme.Disc(p,2,ArenaTheme.Ivory);}
             }
         }
         void DrawHistory(Vector2 center,string history)
@@ -113,13 +125,31 @@ namespace PenaltyArena
         }
         void DrawSettings(float width)
         {
-            var r=SettingsRect(width);theme.Panel(r);theme.Label(new Rect(r.x+20,r.y+15,280,30),"SES VE GÖRÜNTÜ",theme.caption);
+            var r=SettingsRect(width);theme.Panel(r);theme.Label(new Rect(r.x+20,r.y+15,280,30),"AYARLAR",theme.caption);
             if(theme.Button(new Rect(r.x+20,r.y+62,132,42),"30 FPS",Application.targetFrameRate==30))Application.targetFrameRate=30;
             if(theme.Button(new Rect(r.x+168,r.y+62,132,42),"60 FPS",Application.targetFrameRate==60))Application.targetFrameRate=60;
             theme.Label(new Rect(r.x+20,r.y+123,280,25),"SES DÜZEYİ",theme.fieldLabel);
             AudioListener.volume=GUI.HorizontalSlider(new Rect(r.x+20,r.y+162,280,22),AudioListener.volume,0,1);
             theme.Label(new Rect(r.x+20,r.y+191,280,28),game.room.Connected?"Maç devam eder.":"Ses düzeyi",theme.muted);
-            if(theme.Button(new Rect(r.x+20,r.y+232,280,34),"KAPAT"))settings=false;
+            if(theme.Button(new Rect(r.x+20,r.y+232,280,38),"OYUNA DÖN"))settings=false;
+            GUI.enabled=game.room.Connected&&!game.room.Busy;
+            if(theme.Button(new Rect(r.x+20,r.y+280,280,38),"ODADAN ÇIK")){settings=false;game.room.Leave();}
+            GUI.enabled=!quitting;
+            if(theme.Button(new Rect(r.x+20,r.y+328,280,38),quitting?"ÇIKILIYOR…":"OYUNDAN ÇIK"))QuitGame();
+            GUI.enabled=true;
+            theme.Label(new Rect(r.x+20,r.y+380,280,37),"Taraftar: Gregor Quendel · CC BY 4.0\nKesilmiş ve döngüye uyarlanmıştır.",theme.status);
+            if(theme.Button(new Rect(r.x+20,r.y+429,132,30),"Ses kaynağı"))Application.OpenURL("https://opengameart.org/content/free-crowd-cheering-sounds");
+            if(theme.Button(new Rect(r.x+168,r.y+429,132,30),"Lisans"))Application.OpenURL("https://creativecommons.org/licenses/by/4.0/");
+        }
+        public async void QuitGame()
+        {
+            if(quitting)return;quitting=true;
+            await System.Threading.Tasks.Task.WhenAny(game.room.LeaveAsync(),System.Threading.Tasks.Task.Delay(2000));
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying=false;
+#else
+            Application.Quit();
+#endif
         }
         void Divider(float x,float y,float width)=>ArenaTheme.Line(new Vector2(x,y),new Vector2(x+width,y),new Color(.30f,.28f,.20f,.65f));
         void Gear(Vector2 c){theme.Ring(c,8,ArenaTheme.Gold,3);for(int i=0;i<8;i++){var d=new Vector2(Mathf.Cos(i*Mathf.PI/4),Mathf.Sin(i*Mathf.PI/4));ArenaTheme.Line(c+d*8,c+d*12,ArenaTheme.Gold,4);}}

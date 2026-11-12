@@ -20,3 +20,8 @@ Integration notes:
 - KitReliefNormal.png is a Unity-imported height-to-normal derivative at heightmapScale .006, runtime normal strength .30.
 - Generated UV edges vary slightly from the input. Detail albedo is clamped and low-strength; geometry, colors and numbers still come from the mesh-aware authoring code.
 - Final real-player renders were inspected. These textures do not replace the source character with a photogrammetry model.
+
+3. HeadRelief.png
+Input: HeadDetail-v2.png
+Generated source: exec-b21739f7-b73d-42b6-98dc-7e03ceab514e.png
+Use case: precise-object-edit. Grayscale head UV height map preserving all islands, closed eyelids, mouth and ears; flat middle-gray base and background, shallow pores/creases/lip lines/beard stubble, no broad face volume, albedo coloration or lighting. Imported as a Unity height-to-normal derivative (heightmapScale .012, normal strength .4, 2048 cap). Licensed source-derived images remain local.

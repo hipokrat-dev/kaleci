@@ -33,7 +33,7 @@ def run(relay, motion=False):
         return process
     try:
         host = launch(host_log, ["-arena-relay-host" if relay else "-arena-smoke-host"])
-        deadline = time.monotonic() + 170
+        deadline = time.monotonic() + 230
         if relay:
             code = None
             while time.monotonic() < deadline and host.poll() is None:
@@ -55,6 +55,8 @@ def run(relay, motion=False):
             content = log.read_text(errors="replace")
             expected = "SMOKE_RESULT score=1:0 history=GKKKK/DDDDD winner=0 shots=10" if motion else "SMOKE_RESULT score=5:0 history=GGGGG/DDDDD winner=0 shots=10"
             match = re.search(expected, content)
+            if "CHOICE_FLOW_OK" not in content:
+                raise RuntimeError(f"{mode} {name} selection flow failed; see {log.name}")
             if motion and "MOTION_PHYSICS_OK" not in content:
                 raise RuntimeError(f"{mode} {name} physics failed; see {log.name}")
             if process.poll() != 0 or not match or "SMOKE_BAD_RESULT" in content or "SMOKE_TIMEOUT" in content:

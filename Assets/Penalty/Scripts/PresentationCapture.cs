@@ -21,7 +21,7 @@ namespace PenaltyArena
         {
             Directory.CreateDirectory(destination);var game=FindFirstObjectByType<PenaltyGame>();yield return null;
             var ui=game.GetComponent<ArenaUI>();game.enabled=false;ui.enabled=withUI;game.strikerMotion.enabled=false;game.keeperMotion.enabled=false;game.ball.isKinematic=true;
-            string[] names=withUI?new[]{"home","shooter","keeper","save","result","settings","finished","tablet","wide"}:players?new[]{"shooter","keeper","striker-portrait","keeper-portrait","hands","strike","save-low","save-high","recovery"}:new[]{"shooter","keeper","save"};
+            string[] names=withUI?new[]{"home","shooter","keeper","locked","opponent-ready","roles-swapped","save","result","settings","finished","tablet","wide"}:players?new[]{"shooter","keeper","striker-portrait","keeper-portrait","hands","strike","save-low","save-high","recovery"}:new[]{"shooter","keeper","save"};
             foreach(string name in names) {
                 bool keeper=name=="keeper";game.SetGoalNetVisible(!keeper);
                 game.gameCamera.transform.position=keeper?game.keeperCameraPosition:game.shooterCameraPosition;
@@ -44,7 +44,10 @@ namespace PenaltyArena
                 if(withUI){
                     if(name=="tablet")Screen.SetResolution(1200,900,FullScreenMode.Windowed);
                     if(name=="wide")Screen.SetResolution(1600,720,FullScreenMode.Windowed);
-                    ui.captureView=name=="home"?null:new MatchSnapshot{count=2,shotId=6,shooter=0,score0=2,score1=1,name0="OYUNCU 1",name1="OYUNCU 2",history0="GGD",history1="GKD",phase=(int)(name=="result"?MatchPhase.Result:name=="finished"?MatchPhase.Finished:MatchPhase.Aiming),winner=0,message="KURTARIŞ"};
+                    ui.captureView=name=="home"?null:new MatchSnapshot{count=2,shotId=8,shooter=1,score0=2,score1=1,name0="OYUNCU 1",name1="OYUNCU 2",history0="GGKDD",history1="GKD",phase=(int)(name=="result"?MatchPhase.Result:name=="finished"?MatchPhase.Finished:MatchPhase.Aiming),winner=0,message="KURTARIŞ"};
+                    if(name=="locked")ui.captureView.locked1=true;
+                    if(name=="opponent-ready")ui.captureView.locked0=true;
+                    if(name=="roles-swapped"){ui.captureView.shotId=5;ui.captureView.history1="";ui.captureView.score1=0;}
                     if(name=="tablet"){ui.captureView.name0="ÇAĞRI ŞİMŞEK";ui.captureView.name1="İPEK ÖZTÜRK";}
                     ui.captureShooting=!keeper;ui.captureAiming=name=="shooter"||name=="tablet"||name=="wide";ui.captureSettings=name=="settings";
                 }

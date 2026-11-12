@@ -1,6 +1,20 @@
 # Doğrulama — 12 Kasım 2026
 
-## Oyuncu yüzeylerinin güncel doğrulaması
+## Güncel teslim — 0.2.0, protokol 2
+
+- Her oyuncu seçimini kilitler; tek seçim sırasında Aiming evresi, topun konumu ve bekleme animasyonları korunur. Rakibe yalnızca kilit durumu gider. İki seçimden sonra şut ve kurtarış aynı, 350 ms ilerideki sunucu zamanına atanır. Yerel erken kaleci tahmini kaldırıldı.
+- Atış sırası 0,0,0,0,0,1,1,1,1,1. Her iki oyuncu beş atışını bitirir; eşitlikte karşılıklı birer ek atış yapılır. Tekrar/eski atış/yanlış rol/yanlış evre ve NaN/Infinity komutları reddedilir. Seçimler kopyalanır ve değiştirilemez.
+- 129 kural/seçim, 1.238 hareket, 71 arayüz/ses ve 126 sahne/oyuncu kontrolü geçti. `Docs/rule-test-results.txt` son çalıştırma tarihini taşır.
+- Yerel iki süreçte ve gerçek Unity Relay odasında `--motion` testleri geçti. İki süreçte de `CHOICE_FLOW_OK waiting=10 simultaneous=10 blocks=5+5`, `MOTION_PHYSICS_OK` ve `SMOKE_RESULT score=1:0 history=GKKKK/DDDDD winner=0 shots=10` görüldü; süreçlerin tamamı exit code 0. Test atışlar boyunca şutçu-ilk/kaleci-ilk sırasını değiştirir, ilk seçimin bekletildiğini, gizli kaldığını ve ortak başlangıç saatini kontrol eder. Canlı maçta iki sağ ve iki sol kurtarış gerçekleşti.
+- Gerçek uygulamadan 12 arayüz karesi (kilitli seçim, rakip hazır, rol değişimi, ayarlar, 4:3 dahil) ve 9 oyuncu/poz karesi alındı. `Docs/presentation-choice-ui` ve `Docs/presentation-players-v3` yerel kalır. Örnek skorlar ÖNİZLEME olarak etiketlidir. Yakın planlar ve ayarlar/4:3 görüntüleri gözle incelendi.
+- Yüz için yeni cilt kabartı haritası, düşük kuvvetli normal, sakal/cilt parlaklık ayrımı ve yumuşak dolgu eklendi. Göz kapağı ve göz yüzeyi birlikte daraltıldı. Kaynak ücretsiz karakter hâlâ fotogerçekçi referans model kalitesinde değildir.
+- Lisanslı gerçek taraftar kayıtlarından 30 saniyelik döngü, 6 saniyelik gol ve 4 saniyelik kurtarış tepkisi eklendi. Master ses ayarı saklanır; uygulama arka plana geçince ses duraklatılır. Kaynak, lisans ve değişiklik atfı ayarlardadır. Ses dosyalarının uzunluk/kanalları, paketlenmesi ve sinyal seviyesi kontrol edildi; fiziksel tablet hoparlör testi yapılmadı.
+- Ana menüde ve ayarlarda Oyundan çık, maç ayarlarında Odadan çık bulunur. Çıkış oturumdan ayrılmayı en fazla 2 saniye bekler. Menü görüntüsü doğrulandı; macOS yerel pencere otomasyonu uygulamaya bağlanamadığı için düğmeye tıklayarak kapanma testi tamamlanmadı. Açılan bağlantısız önizleme süreci kapatıldı.
+- Android IL2CPP ARM64 ve macOS development derlemeleri başarılı. **Paylaşılacak dosya:** `Builds/TabletTest/PenaltiArena-0.2.0.apk`, 63.431.507 byte (60,5 MiB). SHA-256: `ed8bd293fe013736fe2865f201b5fd44cbb1c9d218ec0cd28f685ccf49dbf290`.
+- APK imzası doğrulandı; önceki dosyayla aynı imzalama sertifikası. Paket `com.familyarena.penalty`, versionName `0.2.0`, versionCode `2`, minSdk `26`, targetSdk `36`. IL2CPP metadata içinde yeni seçim, ses ve çıkış kodları mevcut. Eski 0.1.0 doğrulanmış APK'nın hash'i değişmedi.
+- İki tablette de aynı yeni APK kurulmalı. Fiziksel Lenovo/Honor dokunma, ses, FPS ve ısınma testi henüz yapılmadı. Kullanıcı dosyayı kendi seçtiği iki Drive hesabına yükleyecek; hiçbir Drive hesabına dosya yüklenmedi.
+
+## Önceki oyuncu yüzeyi teslimi (0.1.0)
 
 - Yüz, forma ve el geometrisinin UV dikişlerini koruyan yumuşatması; kemiklere bağlı taranmış saç, kısa sakal ayrıntısı, uzun kaleci kolları ve ayrı cilt/kumaş/eldiven/saç materyalleri eklendi. Ücretsiz kaynak model hâlâ referanstaki fotogerçekçi taranmış insan kalitesinde değildir.
 - 28 kural, 1.238 hareket, 65 arayüz ve 126 sahne/oyuncu kontrolü geçti. Ek kontroller her skin meshindeki tangent, sonlu normal, normalize dört kemik ağırlığı, materyal, yeni shader ve uzun kol varlığını doğrular.
@@ -21,7 +35,7 @@
 - Çevre geometrisi 157.452 üçgen, 49 mesh renderer; karakterlerle toplam 65 renderer. Önceki KCISA uyarlamasında çevre yaklaşık 1,19 milyon üçgendi. Bunlar tablet FPS ölçümü değildir.
 - Yeni sahnenin kaynakları ve yeniden oluşturma adımları: [art-direction.md](art-direction.md). Ham Asset Store varlıkları ve paketlere bağlı türevler public Git dışında tutulur.
 
-## Geçen kontroller
+## Önceki temel sürüm kontrolleri
 
 - Unity 6000.6.8f1 / URP 17.6.0 / NGO 2.14.0 / Multiplayer Services 2.4.0 ile C# derlemesi.
 - MatchRules: 28 kontrol geçti (`Docs/rule-test-results.txt`): beşer atış, karşılıklı ek atış, rol/sıra/evre doğrulaması ve tek sonuç.
@@ -34,7 +48,7 @@
 - Android IL2CPP ARM64 ve macOS development build başarılı. Önceki animasyon tesliminin APK boyutu: `Builds/PenaltiArena-dev.apk`, 103.720.733 byte (yaklaşık 99 MiB). APK içindeki IL2CPP metadata’da yeni CharacterMotion, ReadJson ve UTF-8 uzunluk doğrulaması ayrıca kontrol edildi.
 - Blender 5.1.2 ile özgün Goal.blend ve Goal.fbx üretimi başarılı; stadyum sahnesinde kullanılıyor.
 
-## Şut ve kurtarış doğrulaması
+## Önceki tepkisel şut ve kurtarış doğrulaması (0.1.0)
 
 - `ArenaAnimated.unity`: 2,4 saniyelik şut; temas 0,58 saniye. Gerçek kemik ölçümünde ayak ucu ile topun arka yüzeyi arasında 1 cm, ayakkabı tabanı ile zemin arasında yaklaşık 1 mm var.
 - Dokuz kurtarış; uzanma, iniş, kalkış ve merkeze dönüş. Sağ/sol el erişimi 2,9 m. Eski sabit collider’lar kaldırıldı; 9 kapsül ve 3 küre kemiklerden güncellenir.
@@ -44,7 +58,7 @@
 - Şut tekrar komutu Windup sırasında reddedilir; kaleci bu sırada hareket edebilir. İstemci hareket başlangıcını ortak ağ saatinden okur ve kendi kaydırmasını kısa süre yerel tahminle gösterir.
 - Yeni zaman verileriyle ilk Relay denemesinde NGO’nun varsayılan UTF-16 mesajı MTU sınırını aştı. Mesajlar UTF-8 oldu, uzunluk denetimi eklendi; çok uzun ek-atış geçmişinde parçalı güvenilir gönderim kullanılır. İki cihaz aynı güncel sürümü kullanmalıdır.
 
-## Gerçek Relay testi
+## Önceki gerçek Relay testleri (0.1.0)
 
 Kullanıcının hesabında **Kaleci** Unity Cloud projesi oluşturuldu ve yerel projeye bağlandı. Kullanıcı hedef kitleyi **çocuklara yönelik** seçti. Reklam, Analytics, ek kimlik sağlayıcısı veya ücretli abonelik etkinleştirilmedi.
 
@@ -75,6 +89,6 @@ Bu güncel test loopback bağlantısı kullanmadı. Aynı bilgisayardan Relay'e 
 - Gerçek üçüncü istemcinin reddi; ağ gecikmesi/paket kaybı, arka plana alma ve kopma senaryoları.
 - İki istemciden rövanş onayı uçtan uca testi.
 - Hareketlerin gerçek tablet ekranında ve yüksek ağ gecikmesinde hissi; nihai karakter/mocap ve sanat iyileştirmesi.
-- Arayüzün gerçek cihaz dokunma/okunabilirlik testi, özel sesler, file tepkisi, seyirciler için gelişmiş LOD, baked lighting ve sinematik açılış.
+- Arayüzün gerçek cihaz dokunma/okunabilirlik testi, file tepkisi, seyirciler için gelişmiş LOD, baked lighting ve sinematik açılış.
 
 Bu sürüm teknik prototiptir; referanslardaki premium kaliteye ulaşılmış veya yayınlanabilir sayılmaz. Üçüncü taraf paket kaynakları, türetilmiş ham varlıklar ve stadyum sahnesi public Git dışında tutulur; yeniden oluşturma araçları repodadır.

@@ -1,0 +1,12 @@
+Free Crowd Cheering Sounds — Gregor Quendel (2022)
+Source: https://opengameart.org/content/free-crowd-cheering-sounds
+Author: https://www.gregorquendel.com/
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+CrowdBed.wav: track 10, Ambience. Trimmed, filtered, crossfaded into a 30-second loop.
+CrowdGoal.wav: track 04, Strong cheering - II - Short. Trimmed and faded to 6 seconds.
+CrowdSave.wav: track 05, Soft cheering - I. Trimmed and faded to 4 seconds.
+All three converted to 44.1 kHz stereo PCM; Unity compresses builds to Vorbis and peak-limited.
+No endorsement by the creator is implied. The game's source-code license does not
+replace this audio license. Credits, source and license are also accessible in Settings.

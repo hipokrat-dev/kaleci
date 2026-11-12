@@ -12,6 +12,11 @@ namespace PenaltyArena.Editor
     {
         static void Players(PenaltyGame game)
         {
+            Texture2D faceNormal=null;
+            if(File.Exists(Art+"/HeadRelief.png")) {
+                string path=Art+"/HeadReliefNormal.png";File.Copy(Art+"/HeadRelief.png",path,true);AssetDatabase.ImportAsset(path);
+                var importer=(TextureImporter)AssetImporter.GetAtPath(path);importer.textureType=TextureImporterType.NormalMap;importer.convertToNormalmap=true;importer.heightmapScale=.012f;importer.maxTextureSize=2048;importer.mipmapEnabled=true;importer.wrapMode=TextureWrapMode.Clamp;importer.SaveAndReimport();faceNormal=AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            }
             var cloth=AssetDatabase.LoadAssetAtPath<Texture2D>(Art+"/KitRelief.png");
             Texture2D clothNormal=null;
             if(cloth!=null) {
@@ -29,7 +34,12 @@ namespace PenaltyArena.Editor
                     var material=PlayerMaterial(prefix+part,kind,part=="eyes"?.72f:part=="boots"?.38f:kind==0?.33f:.24f);
                     if(!garment) {
                         material.SetTexture("_BaseMap",original.GetTexture("_BaseMap"));material.SetColor("_BaseColor",new Color(1.25f,1.19f,1.14f));
-                        if(part=="head") {string head=File.Exists(Art+"/HeadDetail-v2.png")?Art+"/HeadDetail-v2.png":Art+"/HeadDetail.png";if(File.Exists(head))material.SetTexture("_BaseMap",AssetDatabase.LoadAssetAtPath<Texture2D>(head));}
+                        if(part=="head") {
+                            string head=File.Exists(Art+"/HeadDetail-v2.png")?Art+"/HeadDetail-v2.png":Art+"/HeadDetail.png";
+                            if(File.Exists(head)){var importer=(TextureImporter)AssetImporter.GetAtPath(head);importer.maxTextureSize=2048;importer.anisoLevel=4;importer.SaveAndReimport();material.SetTexture("_BaseMap",AssetDatabase.LoadAssetAtPath<Texture2D>(head));}
+                            material.SetTexture("_BumpMap",faceNormal);material.SetFloat("_BumpScale",.4f);material.SetFloat("_FaceDetail",1);
+                        }
+                        if(part=="eyes")material.SetColor("_BaseColor",new Color(.82f,.80f,.76f));
                     }
                     if(part=="kit"&&cloth!=null){material.SetTexture("_ClothDetail",cloth);material.SetFloat("_ClothAmount",.45f);material.SetTexture("_BumpMap",clothNormal);material.SetFloat("_BumpScale",.30f);}
                     skin.sharedMaterial=material;
@@ -71,6 +81,11 @@ namespace PenaltyArena.Editor
                     float forearm=Mathf.Exp(-Mathf.Pow((Mathf.Abs(p.x)-.48f)/.085f,2));p+=n*forearm*.003f;
                 }else if(part=="head") {
                     float jaw=Mathf.Exp(-Mathf.Pow((p.y-1.685f)/.042f,2));p.x*=1+jaw*(rig.goalkeeper?.085f:.035f);
+                }
+                if(part=="head"||part=="eyes") {
+                    // Fit lids and the eye surface together, reducing the old wide-eyed expression.
+                    float eye=Mathf.Exp(-Mathf.Pow((Mathf.Abs(p.x)-.043f)/.032f,4)-Mathf.Pow((p.y-1.79f)/.031f,4))*Mathf.SmoothStep(0,1,Mathf.InverseLerp(.105f,.145f,p.z));
+                    p.y-=(p.y-1.79f)*.17f*eye;
                 }
                 vertices[i]=skin.transform.InverseTransformPoint(rig.visual.TransformPoint(p));
             }

@@ -18,7 +18,9 @@ Yerel proje, kullanıcının hesabında oluşturulan **Kaleci** Unity Cloud proj
 3. `Penalty Arena → 02 — Android APK oluştur` komutunu kullan. Çıktı: `Builds/PenaltiArena-dev.apk`.
 4. APK'yı iki tablete kur. İlk cihazda oyuncu adını yazıp **Oda oluştur**; ikinci cihazda kodu yazıp **Katıl**.
 5. İki oyuncu da **Hazırım** demeden maç başlamaz. Host kolay modu oda ekranında belirler; iki tarafa aynı top hızı uygulanır.
-6. Her şutta roller değişir. Herkes beş şut çeker, eşitlikte karşılıklı ek atış yapılır. Rövanş iki onay ister.
+6. Şutçu hedefini/gücünü, kaleci atlayış yönünü kaydırıp bırakarak kilitler. İlk seçim rakibe açıklanmaz. İki seçim de gelince hareketler aynı sunucu zamanında başlar.
+7. Önce oda sahibi arka arkaya beş şut çeker; sonra roller değişir, diğer oyuncu beş şut çeker. Eşitlikte karşılıklı birer ek atış yapılır. Rövanş iki onay ister.
+8. Ayarlar içinden ses düzeyi, odadan çıkış ve oyundan çıkış kullanılabilir. Android geri tuşu/masaüstü Escape ayarları açar.
 
 Port yönlendirme gerekmez; internet yolu Multiplayer Services Session + Relay kullanır. Kimlik doğrulama anonimdir. Gizli anahtar kaynak koda yazılmadı. Bağlantı testinin kapsamı ve sonucu `Docs/verification.md` içinde kayıtlıdır.
 
@@ -35,7 +37,7 @@ Port yönlendirme gerekmez; internet yolu Multiplayer Services Session + Relay k
 
 `PenaltyGame`: host yetkili fizik ve skor, şut kimliği/evre/rol/sayısal girdi doğrulaması. Hedef yalnızca şut bırakıldığında gönderilir. İstemci 20 Hz snapshot alır ve görsel pozisyonları yumuşatır. Topun tamamının kale düzlemini geçmesi gol sayılır. Direk sonrası oyun süresi dolana dek sürer; ikinci vuruş reddedilir. Kaleci temasına rağmen içeri giren top gol olabilir.
 
-`MatchRules`: beşer atış, eşit çift ek atış, tek sonuç, rol değişimi. `RuleChecks.Run` gerçek Unity Editor içinde 28 assertion çalıştırır.
+`MatchRules`: beşli atış blokları, eşit çift ek atış, tek sonuç, rol değişimi. `TurnChoices`: sunucuda iki kilitli seçimi bekler; yanlış rol/evre, tekrar, eski atış ve sonlu olmayan değerleri reddeder. `RuleChecks.Run` bu kuralları gerçek Unity Editor içinde doğrular.
 
 `CharacterMotion` / `KeeperHitboxes`: ortak zaman çizelgesinde şut, dokuz kurtarış, toparlanma ve kemikleri izleyen çarpışma alanları. `MotionAuthoring` bu rig üzerinde 30 Hz yerel animasyon eğrileri üretir. Ayrıntılar: `Docs/animation.md`.
 
@@ -100,3 +102,11 @@ Paketler ve `ArenaStadium.unity` hazırken `Penalty Arena → 07 — Şut ve kur
 ### Gece arenasını oluşturma
 
 `ArenaAnimated.unity` hazırken `Penalty Arena → 08 — Gece arenasını oluştur`, ardından `09 — Gece sahnesini doğrula` seç. `ArenaNight.unity` üretilir ve Android build bu sahneyi kullanır. Üç katlı seyircili tribün, çim, projektörler, beyaz/lacivert 9 ve turkuaz 1 numara formaları, iskelete bağlı saç ve gece renk düzeni içerir. Üretim/görsel kaynak ayrıntıları: [Docs/art-direction.md](Docs/art-direction.md). Paketlerden türetilen ham varlıklar Git dışındadır.
+
+## Sürüm 0.2.0
+
+Paylaşılacak APK: `Builds/TabletTest/PenaltiArena-0.2.0.apk` (60,5 MiB).
+
+Ağ protokolü 2 kullanılır. Her iki cihaz aynı APK sürümünü kurmalıdır; eski anlık kaleci hareketi kullanan istemciler yeni odaya bağlanamaz. Eski doğrulanmış 0.1.0 dosyası `Builds/TabletTest` altında korunur. Yeni APK kullanıcı tarafından kendi seçtiği iki Drive hesabına yüklenir; bağlı Drive hesabına otomatik aktarım yoktur.
+
+Taraftar kayıtları Gregor Quendel — Free Crowd Cheering Sounds, CC BY 4.0. `Assets/Penalty/Resources/Audio/LICENSE.txt` ve oyun içi ayarlarda kaynak/lisans bilgisi bulunur. `Tools/prepare_crowd_audio.py` indirilen arşivden döngü ve sonuç tepkilerini üretir. Oyun kayıtları cihazda oynatır; oyun sırasında ses indirmez.

@@ -15,7 +15,8 @@ namespace PenaltyArena
     [Serializable] public class MatchSnapshot
     {
         public int sequence, shotId, shooter, phase, score0, score1, winner = -1;
-        public int diveCode; public float diveProgress;
+        public int diveCode; public float diveProgress, diveDuration;
+        public bool locked0,locked1;
         public double shotStartedAt, diveStartedAt, serverSentAt;
         public Vector3 ballVelocity;
         public string name0 = "Oyuncu 1", name1 = "Oyuncu 2", history0 = "", history1 = "";
@@ -41,7 +42,7 @@ namespace PenaltyArena
         {
             manager = gameObject.AddComponent<NetworkManager>();
             var transport = gameObject.AddComponent<UnityTransport>();
-            manager.NetworkConfig = new NetworkConfig { NetworkTransport = transport, EnableSceneManagement = false, ConnectionApproval = true };
+            manager.NetworkConfig = new NetworkConfig { ProtocolVersion = 2, NetworkTransport = transport, EnableSceneManagement = false, ConnectionApproval = true };
             manager.ConnectionApprovalCallback = (request, response) => {
                 response.Approved = manager.ConnectedClients.Count < 2;
                 response.CreatePlayerObject = false; response.Pending = false;
@@ -138,7 +139,8 @@ namespace PenaltyArena
             if(length<0 || length>maximum || length>reader.Length-reader.Position)throw new ArgumentException("Invalid message length");
             var bytes=new byte[length];reader.ReadBytesSafe(ref bytes,length);return Encoding.UTF8.GetString(bytes);
         }
-        public async void Leave()
+        public async void Leave() => await LeaveAsync();
+        public async Task LeaveAsync()
         {
             if (Busy) return;
             leaving = true; Busy = true;

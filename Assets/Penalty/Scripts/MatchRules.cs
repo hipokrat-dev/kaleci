@@ -25,13 +25,14 @@ namespace PenaltyArena
         public bool NextShot()
         {
             if (!resolved || Finished) return false;
-            Shooter = 1 - Shooter; ShotId++; resolved = false; return true;
+            ShotId++; Shooter = ShooterForShot(ShotId); resolved = false; return true;
         }
+        public static int ShooterForShot(int shotId) => shotId < 5 ? 0 : shotId < 10 ? 1 : (shotId - 10) % 2;
+        public static int AttemptNumber(int shotId) => shotId < 10 ? shotId % 5 + 1 : 6 + (shotId - 10) / 2;
         public static bool CanAct(int actor, int shooter, MatchPhase phase, bool shot)
         {
             if (actor < 0 || actor > 1) return false;
-            return shot ? actor == shooter && phase == MatchPhase.Aiming
-                : actor != shooter && (phase == MatchPhase.Aiming || phase == MatchPhase.Windup || phase == MatchPhase.Flying);
+            return phase == MatchPhase.Aiming && (shot ? actor == shooter : actor != shooter);
         }
     }
 }

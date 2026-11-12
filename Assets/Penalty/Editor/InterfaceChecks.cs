@@ -27,6 +27,10 @@ namespace PenaltyArena.Editor
             Require(Mathf.Abs(standard-tablet)<.0001f,"4:3 keeps the authored horizontal framing");
             Require(Mathf.Abs(PenaltyGame.FitVerticalFieldOfView(38,16f/9)-38)<.001f,"16:9 framing unchanged");
             Require(Mathf.Abs(PenaltyGame.FitVerticalFieldOfView(38,20f/9)-38)<.001f,"Ultrawide keeps vertical framing");
+            foreach(string sound in new[]{"CrowdBed","CrowdGoal","CrowdSave"}) {
+                var clip=Resources.Load<AudioClip>("Audio/"+sound);Require(clip!=null,"Crowd clip "+sound);
+                Require(clip.length>3&&clip.channels==2,"Stereo crowd duration "+sound);
+            }
             File.WriteAllText("Docs/presentation-interface-checks.txt",$"INTERFACE_CHECKS_OK {checks}\nTurkish glyph coverage and 16:9, 4:3, ultrawide, inset safe-area layout mappings passed. Visual layouts are checked in the development player.\n");
             Debug.Log("INTERFACE_CHECKS_OK "+checks);
         }

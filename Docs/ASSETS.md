@@ -59,3 +59,11 @@ Bağımsız çim ve şeffaf 4×4 seyirci atlası yerleşik image_gen ile bu proj
 ## Oyuncu ayrıntıları — 12 Kasım 2026
 
 Kaynak karakterin yüz/forma/el meshleri UV ve iskelet korunarak yumuşatıldı. Yeni saç geometrisi ve uzun kaleci kolları kaynak iskelete bağlı türevlerdir; ham meshler yerelde kalır. `PlayerMeshRefinement`, `PremiumHair` ve `PlayerSurface.shader` üretim kodları repodadır. `KitRelief.png` ve `HeadDetail-v2.png`, yerleşik image_gen ile mevcut UV dokularından düzenlendi. Kaynak paketlerden türedikleri için bu dokular ve bunlardan çıkarılan normal map public Git dışında tutulur. Yeniden üretim ve yönerge kaydı: [art-direction.md](art-direction.md).
+
+## Taraftar sesleri (0.2.0)
+
+Gregor Quendel, **Free Crowd Cheering Sounds** (2022), CC BY 4.0.
+Kaynak: https://opengameart.org/content/free-crowd-cheering-sounds
+Lisans: https://creativecommons.org/licenses/by/4.0/
+
+10 — Ambience, 04 — Strong cheering - II - Short ve 05 — Soft cheering - I kullanıldı. Kayıtlar kesildi, frekans filtresi ve fade uygulandı; ambiyansın döngü birleşimi dört saniye boyunca karıştırıldı. Bu üç türev WAV ve lisans metni yeniden dağıtıma izin veren CC BY 4.0 altında depoya dahil edilir. Oyun içi ayarlarda da atıf, kaynak ve lisans bağlantısı vardır. Asset Store içeriklerinin depoya alınmaması kuralı bu bağımsız ses dosyalarının lisansını değiştirmez.
