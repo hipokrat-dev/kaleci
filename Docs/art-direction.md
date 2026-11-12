@@ -19,9 +19,19 @@ Siyah-altın skor levhası, beş atış göstergesi, tur sekmesi, bağlantı dur
 
 Arayüz `Screen.safeArea` içinde 720 birim yüksekliğe ölçeklenir. Uzun Türkçe adlar alanlarına sığdırılır; dar ekranlarda bağlantı ve ayar düğmeleri skor levhasının altına taşınır. 4:3 kamera, 16:9 için yazılmış yatay kadrajı koruyacak kadar genişler; şutçu ve top kadrajda kalır. Ayarlar sahadaki dokunma/fare ve klavye girdisini engeller, çevrimiçi maçı durdurmaz.
 
-Şutçu beklerken kollarını indirir, göğsünde hafif ve kesintisiz 2,4 saniyelik nefes döngüsü vardır; vuruşa girerken kollar denge pozuna geçer. Kaleci eldivenlerini vücudunun önünde hazır tutar. Forma yanlarında hafif kırışıklık gölgesi, yaka şeridi ve küçük arma bulunur. Şutçunun el görünümü kaynak eldiven geometrisinin ten rengi ve avuç daraltmasıyla uyarlanmıştır; yeni anatomik el modeli değildir. Bilek birleşimi korunur.
+Şutçu beklerken kollarını indirir, göğsünde hafif ve kesintisiz 2,4 saniyelik nefes döngüsü vardır; vuruşa girerken kollar denge pozuna geçer. Kaleci eldivenlerini vücudunun önünde hazır tutar. Forma yanlarında hafif kırışıklık gölgesi ve küçük arma bulunur. Şutçunun el görünümü kaynak eldiven geometrisinin ten rengi ve avuç daraltmasıyla uyarlanmıştır; yeni anatomik el modeli değildir. Bilek birleşimi korunur.
 
 Başlıklar Cinzel SemiBold 600, metinler Manrope Medium 500 kullanır. Google Fonts değişken kaynaklarından fontTools 4.68.0 ile sabit ağırlık çıkarılmıştır; TTF dosyaları ve OFL lisansları `Assets/Penalty/Resources/Fonts` içindedir. Kaynaklar ve lisans kaydı: [ASSETS.md](ASSETS.md).
+
+## Oyuncu yüzeyleri ve geometri
+
+Yüz, forma ve el meshlerinde çevrimdışı tek Loop subdivision geçişi vardır. UV sınırları geometrik konuma göre eşlenir; UV adaları ayrı kalır, kemik ağırlıkları en güçlü dört kemiğe normalize edilir. Boyun/bilek gibi açık sınırlar yerinde korunur. Vücut, çorap ve ayakkabıda kaynak yoğunluğu korunur. Kalecinin çene formu ve şutçunun eldivenden uyarlanan avuç kesiti küçük miktarda şekillendirilir; animasyonlar ve fizik collider'ları değiştirilmez.
+
+Eski küresel saç tutamları yerine saç derisini izleyen kısa, geriye taranmış tutamlar kullanılır. İki karakterin tarama yönü ve tepe hacmi farklıdır. Saç da aynı iskelete bağlıdır. Kalecinin kısa kolunun altına mevcut kol yüzeyini izleyen uzun forma kolu eklenir. Bu, kaynak modelin giydirme uyarlamasıdır; yeni taranmış insan modeli değildir.
+
+`Penalty/Player Surface` cilt, kumaş, deri/eldiven, saç ve göz için ayrı yüzey tepkileri verir. Ciltte küçük gözenek normalleri ve sınırlı yumuşak ışık sarması; kumaşta dokuma ve düşük kuvvetli kabartı; saçta yönlü parlama vardır. Forma kabartısı bütün forma numaralarından bağımsız bir UV dokusudur. Numara ve arma, yumuşatılmış son geometriye göre yeniden boyanır. GPU'ya kaydedilen mesh güncellemelerinde tangent verisi de korunur.
+
+Yakın plan, şut teması, alçak/yüksek kurtarış ve toparlanma incelemesi için development player'da `-arena-player-capture <klasör>` kullanılır. Yerel çıktılar `Docs/presentation-players/` içindedir. Bu, poz incelemesidir; oynanmış maç videosu veya fiziksel tablet FPS testi değildir. İki oyuncunun toplam skin geometrisi için 160.000 üçgen üst sınırı doğrulanır.
 
 ## Yeniden oluşturma
 
@@ -44,6 +54,10 @@ Araç: yerleşik `image_gen`, imagegen becerisi. Referans ekran görüntüleri s
 | `Assets/Penalty/Art/Lookdev/TurfColor.png` | Yeni görsel; opak, 1254×1254 çıktı | Gerçek zamanlı futbol sahası için dört kenardan tekrar edebilen taban rengi. Tam tepeden ortografik görünüş; 20 mm biçilmiş sık doğal ryegrass, küçük gerçekçi çim uçları, dengeli yeşiller. Düz dağınık ışık. Çizgi, biçme bandı, nesne, yazı, ufuk veya sert gölge bulunmamalı. Kare 2048 istenmişti; aracın döndürdüğü çözünürlük 1254'tür. |
 | `Assets/Penalty/Art/Lookdev/CrowdAtlas.png` | Yeni görsel; şeffaf, 1254×1254 | Tam 4×4 düzen; her hücrede tek, önden görülen, bel üstü yetişkin seyirci. Farklı görünüşler; lacivert, krem, gri, mavi ve bordo gündelik kıyafet. Bazıları alkışlıyor veya tezahürat ediyor. Düz dağınık ışık, bağımsız saydam kesitler; stadyum, koltuk, yazı veya çizilmiş hücre sınırı yok. |
 | `Assets/Penalty/Art/Presentation/HeadDetail.png` | Kaynak `head.jpg` düzenleme; yerel türev | UV adaları, sınırlar, yüz özelliklerinin konumu, açılım bozulması ve beyaz boş alanlar aynı kalmalı. Orta kahverengi ten korunmalı; gözenek, koyu kaş, kısa sakal ve dudak ayrıntısı iyileştirilmeli. Düz renk dokusu; yeni portre veya yönlü pişirilmiş gölge olmamalı. |
+| `Assets/Penalty/Art/Presentation/KitRelief.png` | `Strikerkit.png` UV düzeninden gri kumaş kabartısı; yerel türev | UV adaları ve siyah boş alan korunmalı. Numara, renk ve arma kaldırılmalı. Orta gri polyester dokuma, hafif koltuk altı/bel kıvrımları, dikişler ve yaka ribanası. Perspektif, harici ışık, logo ve yazı yok. |
+| `Assets/Penalty/Art/Presentation/HeadDetail-v2.png` | `HeadDetail.png` düzenleme; yerel türev | Aynı UV, orta kahverengi ten ve yüz özellikleri hizası; 28–34 yaş atletik erkek, daha belirgin kısa sakal/bıyık, gözenekler, hafif ifade çizgileri ve kaş ayrıntıları. Kapalı göz kapağı şekli korunmalı. Harici gölge/parlama, portreye dönüştürme ve yeni nesne yok. |
+
+Son iki dokunun tam üretim yönergeleri `Docs/player-texture-prompts.txt` içindedir. Normal map, Unity TextureImporter ile `KitRelief.png` yüksekliğinden `.006` kuvvetiyle üretilir. Yüz v2 bulunmazsa v1, o da yoksa kaynak yüz dokusu kullanılır. Kumaş kabartısı yoksa kaynak üretilebilir düz kumaş shader'ı çalışır.
 
 Yüz dosyası bulunmazsa araç orijinal paket dokusunu kullanır. Bağımsız çim ve seyirci dosyaları yeniden kurulum için repoda tutulur. Kaynak üretim dosyaları kullanıcının `.codex/generated_images` dizininde korunur.
 

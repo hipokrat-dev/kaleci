@@ -12,36 +12,97 @@ namespace PenaltyArena.Editor
     {
         static void Players(PenaltyGame game)
         {
+            var cloth=AssetDatabase.LoadAssetAtPath<Texture2D>(Art+"/KitRelief.png");
+            Texture2D clothNormal=null;
+            if(cloth!=null) {
+                string path=Art+"/KitReliefNormal.png";File.Copy(Art+"/KitRelief.png",path,true);AssetDatabase.ImportAsset(path);
+                var importer=(TextureImporter)AssetImporter.GetAtPath(path);importer.textureType=TextureImporterType.NormalMap;importer.convertToNormalmap=true;importer.heightmapScale=.006f;importer.maxTextureSize=1024;importer.mipmapEnabled=true;importer.wrapMode=TextureWrapMode.Clamp;importer.SaveAndReimport();clothNormal=AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                var colorImporter=(TextureImporter)AssetImporter.GetAtPath(Art+"/KitRelief.png");colorImporter.sRGBTexture=false;colorImporter.maxTextureSize=1024;colorImporter.mipmapEnabled=true;colorImporter.wrapMode=TextureWrapMode.Clamp;colorImporter.SaveAndReimport();
+            }
             foreach(var rig in new[]{game.strikerMotion,game.keeperMotion}) {
                 bool keeper=rig.goalkeeper;string prefix=keeper?"Keeper":"Striker";
                 foreach(var skin in rig.visual.GetComponentsInChildren<SkinnedMeshRenderer>()) {
                     skin.quality=SkinQuality.Bone4;skin.shadowCastingMode=ShadowCastingMode.On;skin.receiveShadows=true;
-                    if(skin.name=="kit" || skin.name=="boots" || skin.name=="socks" || skin.name=="gloaves") {
-                        var material=Mat(prefix+skin.name,Color.white,skin.name=="boots"?.4f:.22f);material.SetFloat("_Mode",!keeper&&skin.name=="gloaves"?0:2);
-                        string part=skin.name;
-                        material.SetTexture("_BaseMap",Paint(skin,rig,p=>Garment(part,p,keeper),prefix+part));skin.sharedMaterial=material;
-                        // Explicit colors make the procedural cloth shader independent of optional source channels.
-                        var mesh=Object.Instantiate(skin.sharedMesh);
-                        if(!keeper&&part=="gloaves") {
-                            var vertices=mesh.vertices;
-                            // Keep the wrist seam intact; only taper the palm beyond its overlap with the forearm.
-                            for(int i=0;i<vertices.Length;i++){var p=rig.visual.InverseTransformPoint(skin.transform.TransformPoint(vertices[i]));var wrist=new Vector3(Mathf.Sign(p.x)*.61f,1.08f,.09f);float taper=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.64f,.71f,Mathf.Abs(p.x)));p=wrist+Vector3.Scale(p-wrist,new Vector3(1,1-.18f*taper,1-.25f*taper));vertices[i]=skin.transform.InverseTransformPoint(rig.visual.TransformPoint(p));}
-                            mesh.vertices=vertices;mesh.RecalculateNormals();mesh.RecalculateBounds();
-                        }
-                        mesh.colors=Enumerable.Repeat(Color.white,mesh.vertexCount).ToArray();skin.sharedMesh=Save(mesh,prefix+part+".asset");
-                    } else {
-                        var material=Object.Instantiate(skin.sharedMaterial);material.name=prefix+skin.name;
-                        if(skin.name=="head" && File.Exists(Art+"/HeadDetail.png"))material.SetTexture("_BaseMap",AssetDatabase.LoadAssetAtPath<Texture2D>(Art+"/HeadDetail.png"));
-                        material.SetColor("_BaseColor",new Color(1.12f,1.1f,1.05f));material.SetFloat("_Smoothness",skin.name=="eyes"?.65f:.31f);skin.sharedMaterial=Save(material,material.name+".mat");
+                    string part=skin.name;bool garment=part=="kit"||part=="boots"||part=="socks"||part=="gloaves";
+                    int kind=part=="kit"||part=="socks"?1:part=="boots"||part=="gloaves"&&keeper?2:part=="eyes"?4:0;
+                    var original=skin.sharedMaterial;
+                    var material=PlayerMaterial(prefix+part,kind,part=="eyes"?.72f:part=="boots"?.38f:kind==0?.33f:.24f);
+                    if(!garment) {
+                        material.SetTexture("_BaseMap",original.GetTexture("_BaseMap"));material.SetColor("_BaseColor",new Color(1.25f,1.19f,1.14f));
+                        if(part=="head") {string head=File.Exists(Art+"/HeadDetail-v2.png")?Art+"/HeadDetail-v2.png":Art+"/HeadDetail.png";if(File.Exists(head))material.SetTexture("_BaseMap",AssetDatabase.LoadAssetAtPath<Texture2D>(head));}
                     }
+                    if(part=="kit"&&cloth!=null){material.SetTexture("_ClothDetail",cloth);material.SetFloat("_ClothAmount",.45f);material.SetTexture("_BumpMap",clothNormal);material.SetFloat("_BumpScale",.30f);}
+                    skin.sharedMaterial=material;
+                    var mesh=part=="eyes"||part=="boots"||part=="body"||part=="socks"?Object.Instantiate(skin.sharedMesh):PlayerMeshRefinement.Refine(skin.sharedMesh);
+                    Sculpt(mesh,skin,rig,part);mesh.colors=Enumerable.Repeat(Color.white,mesh.vertexCount).ToArray();PlayerMeshRefinement.Finish(mesh);skin.sharedMesh=Save(mesh,prefix+part+".asset");
+                    if(garment)material.SetTexture("_BaseMap",Paint(skin,rig,p=>Garment(part,p,keeper),prefix+part));
                 }
+                if(keeper)LongSleeves(rig);
                 Hair(rig,prefix);
             }
+        }
+        static Material PlayerMaterial(string name,int kind,float smooth)
+        {
+            var material=Mat(name,Color.white,smooth,"Penalty/Player Surface");material.SetFloat("_SurfaceKind",kind);return material;
+        }
+        static void Sculpt(Mesh mesh,SkinnedMeshRenderer skin,CharacterMotion rig,string part)
+        {
+            var vertices=mesh.vertices;var normals=mesh.normals;
+            for(int i=0;i<vertices.Length;i++) {
+                var p=rig.visual.InverseTransformPoint(skin.transform.TransformPoint(vertices[i]));
+                var n=rig.visual.InverseTransformDirection(skin.transform.TransformDirection(normals[i])).normalized;
+                if(part=="kit") {
+                    float sides=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.07f,.22f,Mathf.Abs(p.x)));
+                    if(p.y>1.045f) {
+                        float hem=Mathf.Exp(-Mathf.Pow((p.y-1.10f)/.10f,2));
+                        p.x*=1-.035f*hem;
+                        float fold=(Mathf.Sin(p.y*68+Mathf.Abs(p.x)*19)*.0035f+Mathf.Sin(p.y*117-p.x*31)*.0014f)*(sides*.8f+hem*.5f);
+                        p+=n*fold;
+                    }else{
+                        float hem=1-Mathf.SmoothStep(.61f,.83f,p.y);p.y+=.025f*hem;
+                        p+=n*(Mathf.Sin(Mathf.Abs(p.x)*85+p.y*12)*.0035f*(1-hem*.5f));
+                    }
+                } else if(part=="gloaves"&&!rig.goalkeeper) {
+                    // The bare hand uses the existing five fingers. Narrow the glove cuff while retaining its overlap with the forearm.
+                    float x=Mathf.Abs(p.x),taper=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.57f,.65f,x));
+                    var center=new Vector3(p.x,1.168f-(x-.61f)*.9f,.064f+(x-.61f)*.12f);
+                    p=center+Vector3.Scale(p-center,new Vector3(1,1-.18f*taper,1-.26f*taper));
+                }else if(part=="body") {
+                    float forearm=Mathf.Exp(-Mathf.Pow((Mathf.Abs(p.x)-.48f)/.085f,2));p+=n*forearm*.003f;
+                }else if(part=="head") {
+                    float jaw=Mathf.Exp(-Mathf.Pow((p.y-1.685f)/.042f,2));p.x*=1+jaw*(rig.goalkeeper?.085f:.035f);
+                }
+                vertices[i]=skin.transform.InverseTransformPoint(rig.visual.TransformPoint(p));
+            }
+            mesh.vertices=vertices;
+
+        }
+        static void LongSleeves(CharacterMotion rig)
+        {
+            var source=rig.visual.GetComponentsInChildren<SkinnedMeshRenderer>().Single(r=>r.name=="body");var mesh=Object.Instantiate(source.sharedMesh);var points=mesh.vertices;var normals=mesh.normals;
+            var rest=points.Select(p=>rig.visual.InverseTransformPoint(source.transform.TransformPoint(p))).ToArray();var ids=mesh.triangles;var keep=new List<int>();
+            for(int i=0;i<ids.Length;i+=3){var c=(rest[ids[i]]+rest[ids[i+1]]+rest[ids[i+2]])/3;if(Mathf.Abs(c.x)>.265f&&c.y>.95f)keep.AddRange(new[]{ids[i],ids[i+1],ids[i+2]});}
+            for(int i=0;i<points.Length;i++) {
+                var n=rig.visual.InverseTransformDirection(source.transform.TransformDirection(normals[i]));float fold=Mathf.Sin(Mathf.Abs(rest[i].x)*140+rest[i].z*25)*.0018f;
+                points[i]=source.transform.InverseTransformPoint(rig.visual.TransformPoint(rest[i]+n*(.003f+fold)));
+            }
+            mesh.vertices=points;mesh.triangles=keep.ToArray();PlayerMeshRefinement.Finish(mesh);
+            var sleeve=CloneSkin(source,"KeeperLongSleeves",Save(mesh,"KeeperLongSleeves.asset"));
+            var material=PlayerMaterial("KeeperLongSleeves",1,.24f);material.SetTexture("_BaseMap",Paint(source,rig,p=>Mathf.Abs(p.x)>.596f?new Color(.02f,.04f,.055f):new Color(.018f,.29f,.31f)*(1+.035f*Mathf.Sin(p.x*110)),"KeeperSleeve"));sleeve.sharedMaterial=material;
+        }
+        static SkinnedMeshRenderer CloneSkin(SkinnedMeshRenderer source,string name,Mesh mesh)
+        {
+            var obj=new GameObject(name);obj.transform.SetParent(source.transform.parent,false);obj.transform.localPosition=source.transform.localPosition;obj.transform.localRotation=source.transform.localRotation;obj.transform.localScale=source.transform.localScale;
+            var skin=obj.AddComponent<SkinnedMeshRenderer>();skin.sharedMesh=mesh;skin.bones=source.bones;skin.rootBone=source.rootBone;skin.quality=SkinQuality.Bone4;skin.updateWhenOffscreen=true;skin.localBounds=source.localBounds;skin.shadowCastingMode=ShadowCastingMode.On;return skin;
         }
         static Color Garment(string part,Vector3 p,bool keeper)
         {
             Color navy=new Color(.018f,.032f,.055f),ivory=new Color(.84f,.85f,.81f),teal=new Color(.018f,.29f,.31f),gold=new Color(.55f,.42f,.19f);
-            if(part=="gloaves")return keeper?(Mathf.Abs(p.x)<.65f?navy:ivory):new Color(.35f,.21f,.135f);
+            if(part=="gloaves") {
+                float x=Mathf.Abs(p.x);if(!keeper)return new Color(.43f,.26f,.18f)*(1+.035f*Mathf.Sin(x*230)*Mathf.Sin(p.y*150));
+                if(x<.63f)return navy;if(x<.642f)return teal;
+                float panel=Mathf.Sin(p.y*160+p.z*20);return ivory*(panel>.87f?.63f:.97f);
+            }
             if(part=="socks") {
                 Color c=keeper?navy:ivory;if(p.y>.46f&&p.y<.49f || p.y>.51f&&p.y<.53f)c=keeper?ivory:navy;return c;
             }
@@ -60,10 +121,9 @@ namespace PenaltyArena.Editor
                 float side=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.11f,.24f,Mathf.Abs(p.x)));
                 float fold=Mathf.Sin(p.y*74+Mathf.Abs(p.x)*19)*Mathf.Sin(p.y*33-p.x*16);
                 color*=1-side*.09f+fold*(.025f+side*.055f);
-                if(Mathf.Abs(p.x)>.365f&&Mathf.Abs(p.x)<.385f)color=keeper?navy:ivory;
-                if(p.y>1.586f&&p.y<1.596f)color=gold;
+                if(!keeper&&Mathf.Abs(p.x)>.365f&&Mathf.Abs(p.x)<.385f)color=ivory;
             }
-            float stitch=Mathf.Sin(p.x*450)*Mathf.Sin(p.y*450);color*=.97f+stitch*.025f;
+            float stitch=Mathf.Sin(p.x*450)*Mathf.Sin(p.y*450);color*=.99f+stitch*.008f;
             // Athletic numerals are painted in bind-pose coordinates onto the original UVs.
             if(p.z<.005f && p.y>1.23f && p.y<1.53f && Mathf.Abs(p.x)<.115f) {
                 float x=p.x/.23f+.5f,y=(p.y-1.23f)/.30f;
@@ -73,7 +133,7 @@ namespace PenaltyArena.Editor
             if(p.z>.15f&&crest.y<1&&crest.y>-1&&Mathf.Abs(crest.x)<Mathf.Min(.82f,crest.y+1.02f)) {
                 color=gold;if(crest.y>-.65f&&crest.y<.7f&&Mathf.Abs(crest.x)<Mathf.Min(.57f,crest.y+.68f))color=navy;
             }
-            if(Mathf.Abs(p.x)>.35f && p.y>1.28f&&p.y<1.34f)color=keeper?navy:ivory;
+            if(!keeper&&Mathf.Abs(p.x)>.35f && p.y>1.28f&&p.y<1.34f)color=ivory;
             color.a=1;return color;
         }
         static bool Digit(int digit,float x,float y)
@@ -106,46 +166,6 @@ namespace PenaltyArena.Editor
             for(int i=0;i<colors.Length;i++)if(!filled[i])colors[i]=Color.black;
             var texture=new Texture2D(size,size,TextureFormat.RGB24,false);texture.SetPixels(colors);texture.Apply();string path=Art+"/"+name+".png";File.WriteAllBytes(path,texture.EncodeToPNG());Object.DestroyImmediate(texture);AssetDatabase.ImportAsset(path);
             var importer=(TextureImporter)AssetImporter.GetAtPath(path);importer.maxTextureSize=1024;importer.anisoLevel=4;importer.mipmapEnabled=true;importer.wrapMode=TextureWrapMode.Clamp;importer.SaveAndReimport();return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-        }
-        static void Hair(CharacterMotion rig,string prefix)
-        {
-            var skin=rig.visual.GetComponentsInChildren<SkinnedMeshRenderer>().Single(r=>r.name=="head");var source=skin.sharedMesh;
-            var points=source.vertices.ToList();var normals=source.normals.ToList();var coords=source.uv.ToList();var weights=source.boneWeights.ToList();var colors=Enumerable.Repeat(Color.white,points.Count).ToList();var indices=new List<int>();
-            Vector3[] rest=points.Select(v=>rig.visual.InverseTransformPoint(skin.transform.TransformPoint(v))).ToArray();
-            bool Scalp(Vector3 p)=>p.y>(p.z>.1f?1.846f:p.z>0?1.80f:1.77f);
-            var random=new System.Random(rig.goalkeeper?17:29);
-            for(int i=0;i<points.Count;i++) {
-                float push=Scalp(rest[i])?.006f+.003f*Mathf.Sin(rest[i].x*85)*Mathf.Sin(rest[i].z*75):0;
-                var outward=rig.visual.TransformVector(new Vector3(rest[i].x,Mathf.Max(.03f,rest[i].y-1.77f),rest[i].z-.06f).normalized*push);
-                points[i]+=skin.transform.InverseTransformVector(outward);
-            }
-            var sourceIds=source.triangles;
-            for(int k=0;k<sourceIds.Length;k+=3) {
-                int a=sourceIds[k],b=sourceIds[k+1],c=sourceIds[k+2];var mid=(rest[a]+rest[b]+rest[c])/3;
-                if(!Scalp(mid))continue;indices.AddRange(new[]{a,b,c});
-
-            }
-            // Small smooth curls break up the cap silhouette without long triangular spikes.
-            for(int v=0;v<source.vertexCount;v++) {
-                if(!Scalp(rest[v]) || random.NextDouble()>.4)continue;
-                float radius=.009f+(float)random.NextDouble()*.006f;
-                var center=points[v];int first=points.Count;
-                for(int ring=0;ring<=4;ring++)for(int segment=0;segment<8;segment++) {
-                    float phi=ring*Mathf.PI/4,theta=segment*Mathf.PI/4;
-                    var normal=new Vector3(Mathf.Sin(phi)*Mathf.Cos(theta),Mathf.Cos(phi),Mathf.Sin(phi)*Mathf.Sin(theta));
-                    points.Add(center+skin.transform.InverseTransformVector(rig.visual.TransformVector(normal*radius)));
-                    normals.Add(skin.transform.InverseTransformDirection(rig.visual.TransformDirection(normal)));coords.Add(source.uv[v]);weights.Add(source.boneWeights[v]);
-                    float tint=.85f+(float)random.NextDouble()*.25f;colors.Add(new Color(tint,tint,tint,1));
-                }
-                for(int ring=0;ring<4;ring++)for(int segment=0;segment<8;segment++) {
-                    int a=first+ring*8+segment,b=first+ring*8+(segment+1)%8,c=a+8,d=b+8;
-                    indices.AddRange(new[]{a,b,c,b,d,c});
-                }
-            }
-            var mesh=new Mesh{name=prefix+"Hair"};mesh.SetVertices(points);mesh.SetUVs(0,coords);mesh.SetColors(colors);mesh.SetTriangles(indices,0);mesh.bindposes=source.bindposes;mesh.boneWeights=weights.ToArray();mesh.SetNormals(normals);mesh.RecalculateBounds();
-            var obj=new GameObject(prefix+"TexturedHair");obj.transform.SetParent(skin.transform.parent,false);obj.transform.localPosition=skin.transform.localPosition;obj.transform.localRotation=skin.transform.localRotation;obj.transform.localScale=skin.transform.localScale;
-            var hair=obj.AddComponent<SkinnedMeshRenderer>();hair.sharedMesh=Save(mesh,prefix+"Hair.asset");hair.bones=skin.bones;hair.rootBone=skin.rootBone;hair.quality=SkinQuality.Bone4;hair.updateWhenOffscreen=true;hair.localBounds=skin.localBounds;
-            hair.sharedMaterial=Mat(prefix+"Hair",new Color(.065f,.035f,.018f),.16f);hair.shadowCastingMode=ShadowCastingMode.On;
         }
     }
 }

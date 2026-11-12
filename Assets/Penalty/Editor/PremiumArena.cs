@@ -109,6 +109,10 @@ namespace PenaltyArena.Editor
                     var m=r.sharedMesh;var ps=m.vertices.Select(v=>rig.visual.InverseTransformPoint(r.transform.TransformPoint(v))).ToArray();
                     var b=new Bounds(ps[0],Vector3.zero);foreach(var p in ps)b.Encapsulate(p);
                     report.AppendLine(r.name+" verts="+m.vertexCount+" bounds="+b+" bones="+string.Join(",",r.bones.Select(t=>t.name)));
+                    if(r.name=="body"||r.name=="gloaves")foreach(float x in new[]{.54f,.57f,.59f,.61f,.63f,.65f,.67f,.69f,.72f,.75f}) {
+                        var ring=ps.Where(p=>Mathf.Abs(p.x-x)<.011f&&p.y>.95f).ToArray();if(ring.Length==0)continue;
+                        report.AppendLine($"WRIST {r.name} x={x:F3} y={ring.Min(p=>p.y):F4}..{ring.Max(p=>p.y):F4} z={ring.Min(p=>p.z):F4}..{ring.Max(p=>p.z):F4} count={ring.Length}");
+                    }
                     if(r.name=="kit") {
                         var uv=new Texture2D(1024,1024);var pixels=Enumerable.Repeat(Color.black,1024*1024).ToArray();
                         for(int i=0;i<m.vertexCount;i++) {

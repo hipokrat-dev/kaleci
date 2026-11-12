@@ -54,3 +54,8 @@ Bağımsız çim ve şeffaf 4×4 seyirci atlası yerleşik image_gen ile bu proj
 - [Manrope, Google Fonts kaynağı](https://github.com/google/fonts/tree/main/ofl/manrope): Manrope Project Authors. `Manrope[wght].ttf` değişken dosyasından sabit 500 Medium ağırlığı.
 - İkisi de SIL Open Font License 1.1. Kaynak OFL metinleri, telif bildirimleri ve kullanılan sabit TTF dosyaları `Assets/Penalty/Resources/Fonts` içinde birlikte dağıtılır. Bunlar Asset Store paketlerinden gelmez.
 - Sabitleme: fontTools 4.68.0 `instantiateVariableFont(font, {"wght": weight}, inplace=False)`. Aile adları korunur; name tablosunda 2/17 (alt aile), 4 (tam ad), 6 (PostScript ad) sabit ağırlığa göre güncellenir. Türkçe `ÇçĞğİıÖöŞşÜü` karakter kapsamı Unity'de doğrulanır.
+
+
+## Oyuncu ayrıntıları — 12 Kasım 2026
+
+Kaynak karakterin yüz/forma/el meshleri UV ve iskelet korunarak yumuşatıldı. Yeni saç geometrisi ve uzun kaleci kolları kaynak iskelete bağlı türevlerdir; ham meshler yerelde kalır. `PlayerMeshRefinement`, `PremiumHair` ve `PlayerSurface.shader` üretim kodları repodadır. `KitRelief.png` ve `HeadDetail-v2.png`, yerleşik image_gen ile mevcut UV dokularından düzenlendi. Kaynak paketlerden türedikleri için bu dokular ve bunlardan çıkarılan normal map public Git dışında tutulur. Yeniden üretim ve yönerge kaydı: [art-direction.md](art-direction.md).

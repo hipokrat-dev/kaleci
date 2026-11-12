@@ -1,6 +1,6 @@
 # Kaleci — Penaltı Arena
 
-İki Android tablet için internet üzerinden özel odalı 3D penaltı oyunu. Tek kişilik mod yoktur. Gece stadyumu, seyirciler, referans renklerinde formalar ve siyah-altın maç arayüzü eklendi. Bu sürüm geliştirme prototipidir; referanslardaki fotogerçekçi karakter kalitesine henüz ulaşmadı.
+İki Android tablet için internet üzerinden özel odalı 3D penaltı oyunu. Tek kişilik mod yoktur. Gece stadyumu, seyirciler, referans renklerinde formalar ve siyah-altın maç arayüzü eklendi. Oyuncularda daha yumuşak yüz/forma geometrisi, saç, cilt-kumaş materyalleri ve uzun kollu kaleci forması bulunur. Bu sürüm geliştirme prototipidir; referanslardaki fotogerçekçi karakter kalitesine henüz ulaşmadı.
 
 ## Açılış
 

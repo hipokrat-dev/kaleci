@@ -1,6 +1,16 @@
 # Doğrulama — 12 Kasım 2026
 
-## Güncel oyuncu ve arayüz teslimi
+## Oyuncu yüzeylerinin güncel doğrulaması
+
+- Yüz, forma ve el geometrisinin UV dikişlerini koruyan yumuşatması; kemiklere bağlı taranmış saç, kısa sakal ayrıntısı, uzun kaleci kolları ve ayrı cilt/kumaş/eldiven/saç materyalleri eklendi. Ücretsiz kaynak model hâlâ referanstaki fotogerçekçi taranmış insan kalitesinde değildir.
+- 28 kural, 1.238 hareket, 65 arayüz ve 126 sahne/oyuncu kontrolü geçti. Ek kontroller her skin meshindeki tangent, sonlu normal, normalize dört kemik ağırlığı, materyal, yeni shader ve uzun kol varlığını doğrular.
+- İki oyuncunun toplam geometrisi 156.476 üçgen; çevre 157.452 üçgen. Toplam 66 renderer. İlk ayrıntı geçişi 200.000 skin üçgen bütçesini aştı; saç tutamı sayısı azaltıldı, vücut/çorap kaynak yoğunluğunda bırakıldı ve daha sıkı 160.000 sınırı geçti. Fiziksel Android FPS ölçümü değildir.
+- Son Android IL2CPP ARM64 ve macOS development derlemeleri başarılı. `Builds/PenaltiArena-dev.apk`: 105.655.093 byte (100,8 MiB), SHA-256 `acde611dfc8b93214f559c648a28ae80c280398b5381d27c7ec8663e208d3754`.
+- Gerçek development uygulamasından iki oyun kamerası, iki yüz yakın planı, eldivenler, şut teması, alçak/yüksek kurtarış ve toparlanma kareleri alındı. `PRESENTATION_ACTORS_CAPTURE_OK`, günlükte exception yok. `Docs/presentation-players/`; kareler poz incelemesidir.
+- Son oyuncu derlemesiyle `python3 Tools/run_network_smoke.py --relay --motion` geçti. İki uygulama aynı `score=1:0 history=GKKKK/DDDDD winner=0 shots=10` sonucunu aldı; iki süreç exit code 0, ikisinde `MOTION_PHYSICS_OK`. Günlüklerde exception yok. Bu test fiziksel tablet testi değildir.
+- Kullanıcı Lenovo ve Honor tabletlerde denemek istedi. USB listesinde cihaz bulunmadı. Kullanıcı APK'yı iki ayrı Drive hesabına kendisi yüklemeyi seçti. Önceki doğrulanmış 83.629.845 byte APK `Builds/TabletTest/PenaltiArena-0.1.0-verified.apk` yolunda değişmeden saklandı; SHA-256 `6e43570d14ab0df7dabdf71592c114cbbb21a06fb444a242313689e8b09ecc3d`. Bu dosya yeni oyuncu ayrıntılarını içermez. Hiçbir Drive hesabına yükleme tamamlanmadı.
+
+## Önceki oyuncu duruşu ve arayüz teslimi
 
 - Siyah-altın HUD ve oda/maç sonu menüleri; Türkçe Cinzel/Manrope yazı tipleri, özel hedef halkası ve güç çubuğu tamamlandı. Şutçunun kolları aşağıda bekleme/nefes döngüsü, kalecinin önde hazır eldivenleri, forma ayrıntıları ve şutçunun bilek birleşimi güncellendi.
 - Yeni paket öncesinde 28 oyun kuralı, 1.238 hareket, 70 sahne ve 65 arayüz kontrolü geçti. Arayüz kontrolleri Türkçe karakterleri, 16:9/4:3/geniş ekran/güvenli alan koordinatlarını ve kamera açısını kapsar.

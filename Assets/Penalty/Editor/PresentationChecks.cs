@@ -20,7 +20,7 @@ namespace PenaltyArena.Editor
             try {
                 var roots=scene.GetRootGameObjects();
                 var game=roots.SelectMany(o=>o.GetComponentsInChildren<PenaltyGame>()).Single();
-                foreach(string name in new[]{"Penalty/Stadium Surface","Penalty/Stadium Glow","Penalty/Stadium Crowd"}) {
+                foreach(string name in new[]{"Penalty/Stadium Surface","Penalty/Stadium Glow","Penalty/Stadium Crowd","Penalty/Player Surface"}) {
                     var shader=Shader.Find(name);Require(shader!=null&&shader.isSupported,"Supported shader "+name);
                     Require(!ShaderUtil.GetShaderMessages(shader).Any(m=>m.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error),"Shader compilation "+name);
                 }
@@ -50,10 +50,18 @@ namespace PenaltyArena.Editor
                 foreach(var rig in new[]{s,k}) {
                     foreach(var skin in rig.visual.GetComponentsInChildren<SkinnedMeshRenderer>()) {
                         Require(skin.sharedMesh.bindposes.Length==skin.bones.Length&&skin.bones.All(b=>b!=null),"Valid skin binding "+skin.name);
+                        var mesh=skin.sharedMesh;
+                        Require(mesh.tangents.Length==mesh.vertexCount&&mesh.normals.All(n=>!float.IsNaN(n.x+n.y+n.z)),"Valid tangent frame "+skin.name);
+                        Require(mesh.boneWeights.All(w=>Mathf.Abs(w.weight0+w.weight1+w.weight2+w.weight3-1)<.001f),"Normalized skin weights "+skin.name);
+                        Require(skin.sharedMaterial.shader.name=="Penalty/Player Surface","Player material "+skin.name);
                     }
                     var hair=rig.visual.GetComponentsInChildren<SkinnedMeshRenderer>().Single(r=>r.name.EndsWith("TexturedHair"));
                     Require(hair.sharedMesh.vertexCount>0&&hair.sharedMesh.triangles.Length>0,"Hair mesh bound to actor");
                 }
+                Require(k.visual.GetComponentsInChildren<SkinnedMeshRenderer>().Any(r=>r.name=="KeeperLongSleeves"),"Keeper long sleeves");
+                long skinTriangles=renderers.OfType<SkinnedMeshRenderer>().Sum(r=>(long)r.sharedMesh.triangles.Length/3);
+                File.WriteAllLines("Docs/presentation-player-budget.txt",renderers.OfType<SkinnedMeshRenderer>().Select(r=>r.name+" triangles="+r.sharedMesh.triangles.Length/3+" vertices="+r.sharedMesh.vertexCount));
+                Require(skinTriangles<160000,"Two-player skin triangle budget: "+skinTriangles);
                 for(int code=1;code<=9;code++) {
                     k.Evaluate(code,game.diveDuration,false,0,0);k.hitboxes.Sync();
                     var hand=code>=7?k.rightHand:k.leftHand;
@@ -62,7 +70,7 @@ namespace PenaltyArena.Editor
                 }
                 long triangles=renderers.OfType<MeshRenderer>().Sum(r=>(long)r.GetComponent<MeshFilter>().sharedMesh.triangles.Length/3);
                 Require(triangles<500000,"Static triangle budget");
-                File.WriteAllText("Docs/presentation-checks.txt",$"PRESENTATION_CHECKS_OK {checks}\nStatic triangles: {triangles}; renderers including skins: {renderers.Length}\nShader support, persisted grading, materials, camera controls, contact, all nine saves, skin binding and collision alignment passed.\n");
+                File.WriteAllText("Docs/presentation-checks.txt",$"PRESENTATION_CHECKS_OK {checks}\nStatic triangles: {triangles}; skin triangles: {skinTriangles}; renderers including skins: {renderers.Length}\nShader support, persisted grading, materials, camera controls, contact, all nine saves, skin binding, tangents, weights and collision alignment passed.\n");
                 Debug.Log("PRESENTATION_CHECKS_OK "+checks);
             } finally { EditorSceneManager.ClosePreviewScene(scene); }
         }

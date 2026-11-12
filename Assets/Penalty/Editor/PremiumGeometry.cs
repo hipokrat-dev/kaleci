@@ -40,7 +40,7 @@ namespace PenaltyArena.Editor
         static T Save<T>(T asset,string filename) where T:Object
         {string path=Art+"/"+filename;var old=AssetDatabase.LoadAssetAtPath<T>(path);if(old==null){AssetDatabase.CreateAsset(asset,path);return asset;}if(asset is Mesh source && old is Mesh target) {
                 // Update native vertex/index buffers as well as serialized data when rebuilding in a live Editor.
-                target.Clear();target.indexFormat=source.indexFormat;target.vertices=source.vertices;target.normals=source.normals;target.uv=source.uv;target.colors=source.colors;
+                target.Clear();target.indexFormat=source.indexFormat;target.vertices=source.vertices;target.normals=source.normals;target.tangents=source.tangents;target.uv=source.uv;target.colors=source.colors;
                 target.bindposes=source.bindposes;target.boneWeights=source.boneWeights;target.subMeshCount=source.subMeshCount;
                 for(int i=0;i<source.subMeshCount;i++)target.SetTriangles(source.GetTriangles(i),i);target.RecalculateBounds();target.UploadMeshData(false);
             } else if(asset is Material sourceMaterial && old is Material targetMaterial) {

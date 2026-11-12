@@ -1,0 +1,22 @@
+Tool: built-in image_gen (imagegen skill), edit mode, opaque outputs.
+Source and generated bitmap assets remain local because they derive from the licensed character UV layout.
+
+1. KitRelief.png
+Input: Assets/Penalty/Art/Presentation/Strikerkit.png
+Output: Assets/Penalty/Art/Presentation/KitRelief.png
+Generated source: exec-b8993264-5a86-4f0c-a3b1-59735bcdcd99.png
+
+Use case: precise-object-edit. Asset type: grayscale cloth HEIGHT / detail texture for the existing UV layout of a rigged football uniform in a real 3D Unity Android game. Edit the attached UV atlas, not a photograph of a jersey. Preserve precisely the UV island outlines, locations, proportions, seams, and solid black unused background. There are back torso at top, front torso at bottom middle, two rotated sleeves at middle sides, shorts legs at bottom corners. Replace ALL colored panels, gold, white, navy, printed numeral and badge with neutral medium-gray (#808080) woven polyester cloth. NO numeral, lettering, logo or badge should remain. Render extremely realistic but restrained small garment tension folds: diagonal tension creases at armpits and waist, soft narrow vertical/diagonal folds on the torso sides, authentic hem stitches and collar ribbing, fine breathable micro-knit. The back upper island is upside down relative to front, maintain exactly its existing orientation. Grayscale height information only: fabric base middle gray, ridges slightly brighter, troughs slightly darker. Uniform planar texture, orthographic, no perspective, no environment, no cast shadows, no external lighting or glossy highlights. This will be multiplied into separately authored white/navy and teal colors and converted into a low-strength normal map, so preserve flat broad torso regions and keep folds shallow and plausible. Keep every UV edge at exactly the same place. Square opaque texture with black unused space.
+
+2. HeadDetail-v2.png
+Input: Assets/Penalty/Art/Presentation/HeadDetail.png
+Output: Assets/Penalty/Art/Presentation/HeadDetail-v2.png
+Generated source: exec-52f37510-c51e-49d8-ab1b-d0e6f972b01c.png
+
+Use case: precise-object-edit. Asset type: UV albedo texture for a real 3D adult football player, NOT a portrait. Enhance the provided UV texture for a believable 28–34 year old athletic male footballer with short dark trimmed beard and strong natural eyebrows, matching a high-end football videogame. Preserve every UV island boundary, position, orientation, feature alignment, closed eyelid shape, nose, lips, ears, white unused background, and overall medium brown skin tone exactly. Do not change facial proportions or draw open eyes. Add believable variation of pores, faint expression lines, tiny natural skin irregularities, well defined but subtle lip texture, realistic short facial hair following jaw/cheek/chin with a neatly trimmed moustache. Beard should be darker and more visible than original, but not bushy. Remove excessive baked directional dark shadows around nostrils/under nose while retaining anatomical detail; the actual game lights will provide shadows. Flat diffuse scanned albedo, no specular highlights, no side lighting, no new objects or text. Preserve top scalp stubble/hairline location exactly. Keep existing face layout pixel-aligned; do not turn this into a standalone head photograph.
+
+Integration notes:
+- Unity imports both at a mobile texture limit. KitRelief is sampled as linear data.
+- KitReliefNormal.png is a Unity-imported height-to-normal derivative at heightmapScale .006, runtime normal strength .30.
+- Generated UV edges vary slightly from the input. Detail albedo is clamped and low-strength; geometry, colors and numbers still come from the mesh-aware authoring code.
+- Final real-player renders were inspected. These textures do not replace the source character with a photogrammetry model.
