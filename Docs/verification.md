@@ -1,5 +1,16 @@
 # Doğrulama — 12 Kasım 2026
 
+## Gece sahnesinin güncel doğrulaması
+
+- `ArenaNight.unity` için 70 ek kontrol geçti: shader derlemesi/desteği, eksiksiz materyaller, kaydedilmiş dört renk/ışık efekti, iki kameranın kaydırma yönü, topun dokunma bölgesi, şut teması, dokuz kurtarışın erişim ve el/head collider hizası, saç/karakter iskelet bağları.
+- 28 oyun kuralı ve 1.235 hareket kontrolü yeni paket öncesinde yeniden geçti.
+- Çevre geometrisi 157.452 üçgen, 49 mesh renderer; karakter meshleriyle toplam 65 renderer. Önceki KCISA uyarlamasında çevre yaklaşık 1,19 milyon üçgendi. Bu sayılar fiziksel tablet FPS ölçümü değildir.
+- Son gece sahnesiyle macOS development ve Android IL2CPP ARM64 derlemeleri başarılı. Yeni APK: `Builds/PenaltiArena-dev.apk`, 67.848.973 byte (64,7 MiB).
+- APK SHA-256: `ffa47e78ee8f5140b0cca00d8b7523a3421032637d1bd8cd3af002237c40ec79`.
+- Derlenmiş macOS uygulamasından GPU skinning ve post processing etkin şekilde şutçu, kaleci ve uzanma pozu ekran görüntüleri alındı. `PRESENTATION_PLAYER_CAPTURE_OK`; `Docs/presentation-runtime/`. Bu kareler poz incelemesidir, oynanmış maç kaydı değildir. Son projektör parlaması bu uygulama çıktısına göre azaltıldı.
+- Son gece derlemesinde `python3 Tools/run_network_smoke.py --relay --motion` geçti. İki ayrı uygulama gerçek Relay üzerinden `score=1:0 history=GKKKK/DDDDD winner=0 shots=10` sonucunu aldı; iki süreç exit code 0. Her iki uygulamada `MOTION_PHYSICS_OK` doğrulandı. Bu, iki fiziksel tablet testi değildir.
+- Yeni sahnenin kaynakları ve yeniden oluşturma adımları: [art-direction.md](art-direction.md).
+
 ## Geçen kontroller
 
 - Unity 6000.6.8f1 / URP 17.6.0 / NGO 2.14.0 / Multiplayer Services 2.4.0 ile C# derlemesi.
@@ -10,7 +21,7 @@
 - Şutçu, kaleci ve genel görünüm gerçek Unity render çıktıları görüntülenerek incelendi. Kaleci için file gizlenir; fizik collider'ları korunur. Şutçunun ayak hizası ve topun görünürlüğü düzeltildi.
 - İki kamera açısından sağ/sol kaydırmanın gerçek ekran projeksiyonu test edildi; önceki ters yön hatası düzeltildi. File konumu/görünürlüğü, değişmeyen collider sayısı, 11 m penaltı noktası, karakter ayak hizası ve materyal referansları kontrolleri geçti.
 - Super Goalie humanoid avatar ve 10 kaleci Animator durumu doğrulandı. Sağ kurtarış pozları sol kliplerden aynalanır. Idle/LeftMiddle/RightMiddle render kontrolleri yapıldı.
-- Android IL2CPP ARM64 ve macOS development build başarılı. Animasyonlu APK: `Builds/PenaltiArena-dev.apk`, 103.720.733 byte (yaklaşık 99 MiB). APK içindeki IL2CPP metadata’da yeni CharacterMotion, ReadJson ve UTF-8 uzunluk doğrulaması ayrıca kontrol edildi.
+- Android IL2CPP ARM64 ve macOS development build başarılı. Önceki animasyon tesliminin APK boyutu: `Builds/PenaltiArena-dev.apk`, 103.720.733 byte (yaklaşık 99 MiB). APK içindeki IL2CPP metadata’da yeni CharacterMotion, ReadJson ve UTF-8 uzunluk doğrulaması ayrıca kontrol edildi.
 - Blender 5.1.2 ile özgün Goal.blend ve Goal.fbx üretimi başarılı; stadyum sahnesinde kullanılıyor.
 
 ## Şut ve kurtarış doğrulaması
@@ -43,7 +54,7 @@ score=1:0 history=GKKKK/DDDDD winner=0 shots=10
 
 İki süreç exit code 0 ile kapandı. Her ikisinde dokuz el çarpışması ve ters taraf kontrolü geçti; Türkçe oyuncu adları bozulmadı. Son test günlüklerinde exception yok. Günlükler: `Logs/relay-motion-host.log`, `Logs/relay-motion-client.log`. İlk zamanlama denemesinde yalnız Flying mesajını bekleyen otomasyon bir köşe şutuna geç kaldı; test girdisi görünür hazırlık evresine taşındı, oyun fiziği değiştirilmedi.
 
-APK SHA-256: `3d5c214b633e1ace97052ae7aa5ba37f628c322eee938db81c60b68918eb2ee6`.
+Önceki animasyon tesliminin APK SHA-256 değeri: `3d5c214b633e1ace97052ae7aa5ba37f628c322eee938db81c60b68918eb2ee6`.
 
 Bu güncel test loopback bağlantısı kullanmadı. Aynı bilgisayardan Relay'e bağlanan iki süreç, ayrı fiziksel tabletlerin ve ayrı internet hatlarının testi yerine geçmez. Önceki temel sürüm ayrıca UDP loopback testini geçmişti.
 
@@ -54,6 +65,6 @@ Bu güncel test loopback bağlantısı kullanmadı. Aynı bilgisayardan Relay'e 
 - Gerçek üçüncü istemcinin reddi; ağ gecikmesi/paket kaybı, arka plana alma ve kopma senaryoları.
 - İki istemciden rövanş onayı uçtan uca testi.
 - Hareketlerin gerçek tablet ekranında ve yüksek ağ gecikmesinde hissi; nihai karakter/mocap ve sanat iyileştirmesi.
-- Nihai arayüz/sesler, file tepkisi, seyirci, LOD/baked lighting, sinematik açılış.
+- Nihai arayüz/sesler, file tepkisi, seyirciler için gelişmiş LOD, baked lighting ve sinematik açılış.
 
 Bu sürüm teknik prototiptir; referanslardaki premium kaliteye ulaşılmış veya yayınlanabilir sayılmaz. Üçüncü taraf paket kaynakları, türetilmiş ham varlıklar ve stadyum sahnesi public Git dışında tutulur; yeniden oluşturma araçları repodadır.

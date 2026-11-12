@@ -11,6 +11,8 @@ namespace PenaltyArena
         public Rigidbody ball;
         public Transform keeper, striker;
         public Camera gameCamera;
+        public Vector3 shooterCameraPosition=new Vector3(0,1.6f,15.5f),shooterCameraTarget=new Vector3(0,-1,0);
+        public Vector3 keeperCameraPosition=new Vector3(0,1.4f,-3),keeperCameraTarget=new Vector3(0,.85f,10);
         public Renderer[] goalNet = Array.Empty<Renderer>();
         public RoomConnection room;
         public CharacterMotion keeperMotion, strikerMotion;
@@ -171,8 +173,8 @@ namespace PenaltyArena
             bool inMatch = room.Connected && Phase != MatchPhase.Lobby && Phase != MatchPhase.Disconnected;
             bool goalie = inMatch && !Shooting;
             SetGoalNetVisible(!goalie);
-            Vector3 cameraPos = goalie ? new Vector3(0, 1.4f, -3f) : new Vector3(0, 1.6f, 15.5f);
-            Vector3 look = goalie ? new Vector3(0, .85f, 10) : new Vector3(0, -1, 0);
+            Vector3 cameraPos = goalie ? keeperCameraPosition : shooterCameraPosition;
+            Vector3 look = goalie ? keeperCameraTarget : shooterCameraTarget;
             gameCamera.transform.position = Vector3.Lerp(gameCamera.transform.position, cameraPos, 1 - Mathf.Exp(-5 * Time.deltaTime));
             gameCamera.transform.rotation = Quaternion.Slerp(gameCamera.transform.rotation, Quaternion.LookRotation(look - gameCamera.transform.position), 1 - Mathf.Exp(-5 * Time.deltaTime));
             ReadInput();

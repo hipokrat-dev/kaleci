@@ -107,6 +107,7 @@ namespace PenaltyArena.Editor
         }
         static string BuildScene()
         {
+            if(File.Exists(PremiumArena.Output) && File.Exists(PremiumArena.Art+"/NightGrade.asset"))return PremiumArena.Output;
             if(File.Exists(MotionAuthoring.Output) && File.Exists(MotionAuthoring.Art+"/PenaltyStrike.anim"))return MotionAuthoring.Output;
             if(File.Exists(StadiumIntegration.Output) && File.Exists("Assets/HandballStadium/PenaltyLayout.json"))return StadiumIntegration.Output;
             if(File.Exists("Assets/Penalty/Scenes/ArenaWithGoalie.unity") && File.Exists("Assets/SuperGoalie/Meshes/Characters/Players/Player001/Character.fbx"))return "Assets/Penalty/Scenes/ArenaWithGoalie.unity";

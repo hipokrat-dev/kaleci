@@ -42,3 +42,7 @@ Resmi API referansları:
 - https://docs.unity.com/en-us/engine/6000.0/script-reference/unityengine/animationclip/sampleanimation
 - https://docs.unity.com/en-us/engine/6000.0/script-reference/unityeditor/animationutility/seteditorcurve
 - https://docs.unity.com/en-us/engine/6000.0/script-reference/unityengine/skinnedmeshrenderer/bakemesh
+
+## Gece sahnesi — 12 Kasım 2026
+
+Bağımsız çim ve şeffaf 4×4 seyirci atlası yerleşik image_gen ile bu proje için üretildi; `Assets/Penalty/Art/Lookdev` içinde repoya eklenir. Seyirciler tribün katlarında 24 mekânsal gruba ayrılmış kesit yüzeyleridir. Referans görselleri arka plan olarak kullanılmaz. Super Goalie yüz dokusu UV düzeni korunarak ayrıntılandırıldı; bu türev yerelde kalır. Forma/saç meshleri de kaynak iskelete uyarlandığı için Presentation dizini ve ArenaNight sahnesi public Git dışında tutulur. KCISA dış çatı halkası kullanılır; futbol tribünü, saçak, yeni kale/file, saha çizgileri ve projektör yerleşimi Editor koduyla üretilir. Yönergeler ve çıktı yolları: [art-direction.md](art-direction.md).

@@ -1,12 +1,12 @@
 # Kaleci — Penaltı Arena
 
-İki Android tablet için internet üzerinden özel odalı 3D penaltı oyunu. Tek kişilik mod yoktur. Bu teslim **teknik prototiptir; premium görsel/animasyon teslimi değildir**.
+İki Android tablet için internet üzerinden özel odalı 3D penaltı oyunu. Tek kişilik mod yoktur. Gece stadyumu, seyirciler ve referans renklerinde formalar eklendi. Bu sürüm geliştirme prototipidir; referanslardaki fotogerçekçi karakter kalitesine henüz ulaşmadı.
 
 ## Açılış
 
 1. Unity Hub → Add → bu repoyu klonladığın klasörü seç.
 2. Unity **6000.6.8f1** ile aç. Paketlerin çözülmesini bekle.
-3. İlk klonlamada `Assets/Penalty/Scenes/Arena.unity` sahnesini aç. Stadyum ve kaleci paketleri entegre edilmiş yerel kurulumda animasyon üretiminden sonra `ArenaAnimated.unity` kullanılır; yalnız kaleci paketi varsa `ArenaWithGoalie.unity` kullanılır.
+3. İlk klonlamada `Assets/Penalty/Scenes/Arena.unity` sahnesini aç. Stadyum ve kaleci paketleri entegre edilmiş yerel kurulumda gece arenası üretiminden sonra `ArenaNight.unity` kullanılır (yalnız animasyon üretildiyse `ArenaAnimated.unity`); yalnız kaleci paketi varsa `ArenaWithGoalie.unity` kullanılır.
 4. Sahneyi yeniden üretmek için `Penalty Arena → 01 — Sahneyi yeniden oluştur`. Bu işlem yalnızca üretilen Arena sahnesini yeniler; sahnede elle yaptığın değişiklikleri önce farklı adla kaydet.
 
 ## İnternet üzerinden iki tablet
@@ -39,7 +39,7 @@ Port yönlendirme gerekmez; internet yolu Multiplayer Services Session + Relay k
 
 `CharacterMotion` / `KeeperHitboxes`: ortak zaman çizelgesinde şut, dokuz kurtarış, toparlanma ve kemikleri izleyen çarpışma alanları. `MotionAuthoring` bu rig üzerinde 30 Hz yerel animasyon eğrileri üretir. Ayrıntılar: `Docs/animation.md`.
 
-`ArenaBuilder`: tekrar üretilebilir mobil URP sahnesi ve Android build komutu. Animasyonlu sahne varsa onu tercih eder.
+`ArenaBuilder`: tekrar üretilebilir mobil URP sahnesi ve Android build komutu. Gece sahnesi varsa onu, yoksa animasyonlu sahneyi tercih eder.
 
 `Blender/build_goal.py`: metre ölçeğinde kale/file, UV, .blend ve .fbx üretimi.
 
@@ -53,8 +53,8 @@ Otomatik iki süreç testi: development macOS uygulamasına `-arena-smoke-host` 
 
 - Super Goalie karakter/top görselleri ve kaleci animasyonları ile KCISA stadyumunun seçilmiş parçaları entegre edildi. Sanat yönetimi hâlâ geliştirme aşamasında.
 - Şutçu için yaklaşma, geriye salınım, ayak–top teması ve takip hareketi üretildi. Kalecinin dokuz kurtarışı iniş, ayağa kalkış ve merkeze dönüş içerir; el/gövde/uzuv collider’ları kemikleri izler. Karakter modelleri hâlâ aynı Super Goalie modelinin iki forma uyarlamasıdır; nihai karakter ve sanat kalitesi değildir.
-- KCISA tribünleri ve iç yapısı URP materyalleriyle çim sahaya uyarlandı. 3.442 koltuk sadeleştirilip 45 bölgeye birleştirildi; dokular en fazla 1024 px. Son LOD, seyirci, baked lighting ve cihaz profili çalışmaları tamamlanmadı.
-- Stadyum sahnesinde Blender kale modeli kullanılır. Birleşik file kaleci kamerasında gizlenir; fizik collider’ları korunur.
+- KCISA tribünleri ve iç yapısı URP materyalleriyle çim sahaya uyarlandı. 3.442 koltuk sadeleştirilip 45 bölgeye birleştirildi; dokular en fazla 1024 px. Gece sahnesinde dış çelik çatı halkası korunur; yeni üç katlı tribün ve 24 bölgeye ayrılmış seyirci kesitleri kullanılır. Baked lighting ve gerçek cihaz profili tamamlanmadı.
+- Stadyum sahnesinde Blender kale modeli; gece sahnesinde aynı ölçüde yeni görsel kale/file kullanılır. Birleşik file kaleci kamerasında gizlenir; fizik collider’ları korunur.
 - Sinematik açılış videosu, özel sesler, file deformasyonu, replay ve son arayüz tasarımı eklenmedi.
 - Gerçek cihazda dokunma, farklı en-boy oranları, 30/60 FPS ölçümleri yapılmadı.
 - Animasyonlar ortak ağ saatiyle örneklenir; katılan kalecinin yerel hareketi hemen gösterilir. Host fizik doğrulamasında geriye sarma yoktur; gecikme hâlâ kurtarış zamanlamasını etkileyebilir.
@@ -96,3 +96,7 @@ macOS development build sonrasında `python3 Tools/run_network_smoke.py` iki sü
 Paketler ve `ArenaStadium.unity` hazırken `Penalty Arena → 07 — Şut ve kurtarışları oluştur` komutunu çalıştır. `ArenaAnimated.unity` ve `Assets/Penalty/Art/Motion` içindeki klipler üretilir. Önceki sahneler kaynak olarak korunur. Animasyonlu sahnenin açık, kaydedilmemiş sürümü yeniden üretim sırasında `Art/Motion/BeforeRebuild.unity` kopyasına alınır. İki cihazda aynı yeni APK kullanılmalıdır; ağ mesajı biçimi UTF-8 olarak güncellenmiştir.
 
 `python3 Tools/run_network_smoke.py --relay --motion` gerçek Relay üzerinde bir gol, dört animasyonlu kurtarış ve beş dışarı atışı doğrular. Ayrıca her iki uygulamada dokuz yön için ayrı fizik sahnesinde el–top çarpışmasını ve ters tarafa atlayışta topun geçmesini denetler. Bu test bir oyun modu değildir.
+
+### Gece arenasını oluşturma
+
+`ArenaAnimated.unity` hazırken `Penalty Arena → 08 — Gece arenasını oluştur`, ardından `09 — Gece sahnesini doğrula` seç. `ArenaNight.unity` üretilir ve Android build bu sahneyi kullanır. Üç katlı seyircili tribün, çim, projektörler, beyaz/lacivert 9 ve turkuaz 1 numara formaları, iskelete bağlı saç ve gece renk düzeni içerir. Üretim/görsel kaynak ayrıntıları: [Docs/art-direction.md](Docs/art-direction.md). Paketlerden türetilen ham varlıklar Git dışındadır.
