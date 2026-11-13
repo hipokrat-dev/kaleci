@@ -34,7 +34,7 @@ namespace PenaltyArena.Editor
             }
             var scale=stadium.transform.localScale;scale.x*=1.6f;scale.z*=1.2f;stadium.transform.localScale=scale;
             var location=stadium.transform.position;location.z=(location.z-28)*1.6f+52.5f;stadium.transform.position=location;
-            Pitch(root.transform);Bowl(root.transform);Goal(game,root.transform);Players(game);Lights(game,root.transform);
+            Pitch(root.transform);Bowl(root.transform);Goal(game,root.transform);Football(game);Players(game);Lights(game,root.transform);
             game.shooterCameraPosition=new Vector3(0,1.25f,15.3f);game.shooterCameraTarget=new Vector3(0,-.4f,0);
             game.keeperCameraPosition=new Vector3(0,1.24f,-3.6f);game.keeperCameraTarget=new Vector3(0,.55f,11);
             game.gameCamera.fieldOfView=38;game.gameCamera.transform.position=game.shooterCameraPosition;game.gameCamera.transform.LookAt(game.shooterCameraTarget);

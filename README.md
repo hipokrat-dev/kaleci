@@ -103,7 +103,13 @@ Paketler ve `ArenaStadium.unity` hazırken `Penalty Arena → 07 — Şut ve kur
 
 `ArenaAnimated.unity` hazırken `Penalty Arena → 08 — Gece arenasını oluştur`, ardından `09 — Gece sahnesini doğrula` seç. `ArenaNight.unity` üretilir ve Android build bu sahneyi kullanır. Üç katlı seyircili tribün, çim, projektörler, beyaz/lacivert 9 ve turkuaz 1 numara formaları, iskelete bağlı saç ve gece renk düzeni içerir. Üretim/görsel kaynak ayrıntıları: [Docs/art-direction.md](Docs/art-direction.md). Paketlerden türetilen ham varlıklar Git dışındadır.
 
-## Sürüm 0.2.0
+## Sürüm 0.3.0
+
+Android test paketi `Builds/TabletTest/PenaltiArena-0.3.0.apk` yolundadır. İki oyuncu da aynı sürümü kurmalıdır. File darbesini paylaşan ağ mesajları protokol 3 kullanır.
+
+YENER GAME açılışının ardından kamera stadyumdan penaltı noktasına iner. Açılış ekrana dokunarak, fareyle tıklayarak veya Escape ile geçilebilir. İki seçim kilitlenince kamera vuruşu yakından gösterir, topu kaleye kadar takip eder ve kalecinin atlayışını kadraja alır.
+
+## Önceki sürüm 0.2.0
 
 Paylaşılacak APK: `Builds/TabletTest/PenaltiArena-0.2.0.apk` (60,5 MiB).
 

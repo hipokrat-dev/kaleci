@@ -137,17 +137,21 @@ namespace PenaltyArena.Editor
             r.Neutral();
             float backswing=MotionTiming.Smooth(.20f,.43f,t)*(1-MotionTiming.Smooth(.43f,MotionTiming.StrikeContact,t));
             float follow=MotionTiming.Smooth(MotionTiming.StrikeContact,.78f,t)*(1-MotionTiming.Smooth(.85f,1.25f,t));
-            var hips=r.Bone(HumanBodyBones.Hips);hips.position=new Vector3(0,.86f+follow*.04f,-.04f);
-            hips.rotation=Quaternion.AngleAxis(7+follow*10,Vector3.right)*hips.rotation;
-            var chest=r.Bone(HumanBodyBones.Chest);chest.rotation=Quaternion.AngleAxis(-backswing*18+follow*22,Vector3.up)*chest.rotation;
+            float plant = MotionTiming.Smooth(.18f,.48f,t) * (1f - MotionTiming.Smooth(.76f,1.29f,t));
+            var hips = r.Bone(HumanBodyBones.Hips);
+            hips.position = new Vector3(-.075f * plant,.86f - .035f * plant + follow * .065f,-.04f + follow * .075f);
+            hips.rotation = Quaternion.Euler(7f + follow * 14f, -backswing * 12f + follow * 19f, -plant * 6f) * hips.rotation;
+            var chest = r.Bone(HumanBodyBones.Chest);
+            chest.rotation = Quaternion.Euler(plant * 5f, -backswing * 14f + follow * 15f, plant * 4f) * chest.rotation;
             Vector3 left=new Vector3(-.20f,.10f,.17f),right=new Vector3(.22f,.10f,-.16f);
             if(t>=0 && t<.22f){float step=Mathf.Sin(t/.22f*Mathf.PI);left+=new Vector3(0,step*.1f,-step*.17f);}
             if(t>=.15f && t<=MotionTiming.StrikeContact)right=Vector3.Lerp(Vector3.Lerp(right,new Vector3(.22f,.30f,-.5f),MotionTiming.Smooth(.15f,.43f,t)),new Vector3(.22f,.10f,.12f),MotionTiming.Smooth(.43f,MotionTiming.StrikeContact,t));
             if(t>MotionTiming.StrikeContact)right=Vector3.Lerp(new Vector3(.22f,.10f,.12f),new Vector3(.22f,.54f,.63f),follow);
             if(t>1.35f && t<MotionTiming.StrikeEnd) {
                 float step=(t-1.35f)/1.05f*Mathf.PI*4;
-                left+=new Vector3(0,Mathf.Max(0,Mathf.Sin(step))*.12f,Mathf.Cos(step)*.14f);
-                right+=new Vector3(0,Mathf.Max(0,-Mathf.Sin(step))*.12f,-Mathf.Cos(step)*.14f);
+                float stepBlend = MotionTiming.Smooth(1.35f,1.46f,t) * (1f - MotionTiming.Smooth(2.25f,MotionTiming.StrikeEnd,t));
+                left+=new Vector3(0,Mathf.Max(0,Mathf.Sin(step))*.12f,Mathf.Cos(step)*.14f)*stepBlend;
+                right+=new Vector3(0,Mathf.Max(0,-Mathf.Sin(step))*.12f,-Mathf.Cos(step)*.14f)*stepBlend;
             }
             SolveLeg(r,false,left);SolveLeg(r,true,right);
             // At contact the toe meets the rear surface of the 22 cm ball, not its center.

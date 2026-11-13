@@ -25,3 +25,8 @@ Integration notes:
 Input: HeadDetail-v2.png
 Generated source: exec-b21739f7-b73d-42b6-98dc-7e03ceab514e.png
 Use case: precise-object-edit. Grayscale head UV height map preserving all islands, closed eyelids, mouth and ears; flat middle-gray base and background, shallow pores/creases/lip lines/beard stubble, no broad face volume, albedo coloration or lighting. Imported as a Unity height-to-normal derivative (heightmapScale .012, normal strength .4, 2048 cap). Licensed source-derived images remain local.
+
+4. YenerGame.png
+Tool: built-in ImageGen, edit of the generated stadium tunnel image.
+Output: Assets/Penalty/Resources/Opening/YenerGame.png
+Use case: text-localization. Asset type: desktop football game opening frame. Replace the existing center wordmark with the exact two words "YENER GAME" (Y E N E R, space, G A M E). Use the same elegant metallic gold serif typography and centered placement, about 57% of image width so it fits narrower windows. Preserve the original cinematic dark stadium tunnel, distant goal, mist, floodlights, grass, composition and 16:9 landscape aspect. No other lettering.

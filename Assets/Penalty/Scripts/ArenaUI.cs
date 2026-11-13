@@ -15,12 +15,106 @@ namespace PenaltyArena
         public static Vector2 ToCanvas(Vector2 point,Rect safe){float scale=Mathf.Max(1,safe.height)/720;return new Vector2((point.x-safe.x)/scale,(safe.yMax-point.y)/scale);}
         public bool BlocksInput(Vector2 point){var safe=Screen.safeArea;float width=safe.width/(Mathf.Max(1,safe.height)/720);return settings||MenuRect(width).Contains(ToCanvas(point,safe));}
         void OnDestroy(){theme?.Dispose();}
-        void Update(){if(UnityEngine.InputSystem.Keyboard.current?.escapeKey.wasPressedThisFrame==true)settings=!settings;}
+        const float LogoDuration = 2.5f;
+        const float TourDuration = 4.8f;
+        Texture2D openingImage;
+        float openingStarted;
+        internal float OpeningElapsed => Time.unscaledTime - openingStarted;
+        internal bool OpeningActive => openingImage != null && OpeningElapsed < LogoDuration + TourDuration;
+
+        void Start()
+        {
+            if (Application.isBatchMode) return;
+            openingImage = Resources.Load<Texture2D>("Opening/YenerGame");
+            openingStarted = Time.unscaledTime;
+        }
+
+        void Update()
+        {
+            bool escape = UnityEngine.InputSystem.Keyboard.current?.escapeKey.wasPressedThisFrame == true;
+            if (OpeningActive)
+            {
+                bool touchEnded = UnityEngine.InputSystem.Touchscreen.current?.primaryTouch.press.wasReleasedThisFrame == true;
+                bool clicked = UnityEngine.InputSystem.Mouse.current?.leftButton.wasReleasedThisFrame == true;
+                if (escape || touchEnded || clicked)
+                {
+                    SetOpeningCamera(1f);
+                    openingImage = null;
+                }
+                return;
+            }
+            if (escape) settings = !settings;
+        }
+
+        void LateUpdate()
+        {
+            if (openingImage == null) return;
+            float progress = Mathf.Clamp01((OpeningElapsed - LogoDuration) / TourDuration);
+            SetOpeningCamera(progress);
+            if (progress >= 1f) openingImage = null;
+        }
+
+        void SetOpeningCamera(float progress)
+        {
+            // A high pass across the pitch descends into the authored penalty camera.
+            Vector3 end = game.shooterCameraPosition;
+            Vector3 start = end + new Vector3(-23f, 8f, 17f);
+            Vector3 controlA = end + new Vector3(-11f, 10f, 25f);
+            Vector3 controlB = end + new Vector3(6f, 2f, 6f);
+            float t = Mathf.SmoothStep(0f, 1f, progress);
+            float remaining = 1f - t;
+            Vector3 position = remaining * remaining * remaining * start
+                + 3f * remaining * remaining * t * controlA
+                + 3f * remaining * t * t * controlB
+                + t * t * t * end;
+            Vector3 target = Vector3.Lerp(new Vector3(2f, 1.6f, 3f), game.shooterCameraTarget, t);
+            game.gameCamera.transform.SetPositionAndRotation(position, Quaternion.LookRotation(target - position));
+        }
+
+        void DrawOpening()
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            var screen = new Rect(0f, 0f, Screen.width, Screen.height);
+            float elapsed = OpeningElapsed;
+            float zoom = Mathf.Lerp(1f, 1.045f, elapsed / LogoDuration);
+            var image = new Rect(-screen.width * (zoom - 1f) / 2f, -screen.height * (zoom - 1f) / 2f,
+                screen.width * zoom, screen.height * zoom);
+            if (elapsed < LogoDuration)
+            {
+                FillOpening(screen, Color.black);
+                GUI.color = new Color(1f, 1f, 1f, Mathf.SmoothStep(0f, 1f, elapsed / .65f));
+                GUI.DrawTexture(image, openingImage, ScaleMode.ScaleAndCrop, true);
+            }
+            else if (elapsed < LogoDuration + .8f)
+            {
+                float alpha = 1f - Mathf.SmoothStep(0f, 1f, (elapsed - LogoDuration) / .8f);
+                GUI.color = new Color(1f, 1f, 1f, alpha);
+                GUI.DrawTexture(image, openingImage, ScaleMode.ScaleAndCrop, true);
+            }
+
+            float bar = screen.height * .065f * (1f - Mathf.SmoothStep(0f, 1f,
+                (elapsed - LogoDuration - TourDuration + .65f) / .65f));
+            FillOpening(new Rect(0f, 0f, screen.width, bar), Color.black);
+            FillOpening(new Rect(0f, screen.height - bar, screen.width, bar), Color.black);
+        }
+
+        static void FillOpening(Rect rect, Color color)
+        {
+            GUI.color = color;
+            GUI.DrawTexture(rect, Texture2D.whiteTexture);
+        }
+
         void OnGUI()
         {
             if(theme==null)theme=new ArenaTheme();var safe=Screen.safeArea;float scale=Mathf.Max(1,safe.height)/720,width=safe.width/scale;
             var matrix=GUI.matrix;var color=GUI.color;bool enabledBefore=GUI.enabled;
             try {
+                if (OpeningActive)
+                {
+                    GUI.matrix = Matrix4x4.identity;
+                    DrawOpening();
+                    return;
+                }
                 GUI.matrix=Matrix4x4.TRS(new Vector3(safe.x,Screen.height-safe.yMax,0),Quaternion.identity,Vector3.one*scale);
                 var room=game.room;var v=game.View;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -98,9 +192,9 @@ namespace PenaltyArena
                 string turn=(v.shooter==0?v.name0:v.name1)+" · "+(v.shotId<5?"İLK 5 ATIŞ":v.shotId<10?"İKİNCİ 5 ATIŞ":"EK ATIŞLAR");
                 theme.Label(new Rect(center-250,109,500,27),turn,theme.caption);
             }
-            if(shooting){
+            if(shooting && phase==MatchPhase.Aiming){
                 theme.Panel(new Rect(width-78,302,64,28),true);theme.Label(new Rect(width-78,302,64,26),"GÜÇ",theme.caption);
-                bool show=aiming||locked||phase==MatchPhase.Windup||phase==MatchPhase.Flying;theme.Power(new Rect(width-64,337,36,190),show?power:0);
+                bool show=aiming||locked;theme.Power(new Rect(width-64,337,36,190),show?power:0);
                 if(aiming||(locked&&phase==MatchPhase.Aiming)){var aim=preview?new Vector2(-3,2.1f):game.Aim;var p=ToCanvas(game.gameCamera.WorldToScreenPoint(new Vector3(aim.x,aim.y,0)),safe);theme.Ring(p,17,ArenaTheme.Gold,2);theme.Disc(p,2,ArenaTheme.Ivory);}
             }
         }

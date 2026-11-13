@@ -5,6 +5,8 @@ namespace PenaltyArena
     // Only activated by explicit CLI flags on development players. Not a game mode.
     public sealed class NetworkSmokeCheck : MonoBehaviour
     {
+        ArenaUI arenaUI;
+        bool firstGoalHitNet;
         PenaltyGame game; bool host, relay, motion, reportedCode, started, ready, done, left; string joinCode=""; int sent = -1,dived=-1; float began, finishAt,aimingAt;int seenShot=-1,waitingTurns,startedTurns;bool sawWait,sawStart;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Install()
@@ -16,6 +18,7 @@ namespace PenaltyArena
         }
         void Start() {
             game=FindFirstObjectByType<PenaltyGame>();var args=Environment.GetCommandLineArgs();
+            arenaUI = game.GetComponent<ArenaUI>();
             host=Array.IndexOf(args,"-arena-smoke-host")>=0 || Array.IndexOf(args,"-arena-relay-host")>=0;
             int client=Array.IndexOf(args,"-arena-relay-client");relay=client>=0 || Array.IndexOf(args,"-arena-relay-host")>=0;
             if(client>=0 && client+1<args.Length)joinCode=args[client+1];
@@ -36,7 +39,7 @@ namespace PenaltyArena
                 if(elapsed>4)Application.Quit(0);return;
             }
             if(Time.realtimeSinceStartup-began>220) { Debug.LogError("SMOKE_TIMEOUT"); Application.Quit(2); return; }
-            if(!started && Time.realtimeSinceStartup-began>1) {
+            if(!started && Time.realtimeSinceStartup-began>1 && !arenaUI.OpeningActive) {
                 started=true; game.PlayerName=host?"Test Çağrı":"Test İpek";
                 if(relay)game.room.Open(host,joinCode);else game.room.Local(host);
             }
@@ -44,6 +47,7 @@ namespace PenaltyArena
             if(!game.room.Connected) return;
             if(!ready && game.View.count==2) { ready=true; game.Ready(); }
             var v=game.View;
+            if (v.shotId == 0 && v.netHitAt > 0 && v.netHitSpeed > 0) firstGoalHitNet = true;
             if(game.Phase==MatchPhase.Aiming && v.shotId!=seenShot) {
                 seenShot=v.shotId;aimingAt=Time.realtimeSinceStartup;sawWait=sawStart=false;
             }
@@ -75,6 +79,8 @@ namespace PenaltyArena
                 if(!v.locked0||!v.locked1||Math.Abs(v.shotStartedAt-v.diveStartedAt)>.00001||v.shotStartedAt<=0){Fail("shared start timestamp");return;}
             }
             if(game.Phase==MatchPhase.Finished && !done) {
+                if (!firstGoalHitNet) { Fail("first goal produced no back-net impact"); return; }
+                Debug.Log("NET_IMPACT_OK");
                 if(waitingTurns!=10||startedTurns!=10){Fail($"observed barriers={waitingTurns} starts={startedTurns}");return;}
                 Debug.Log("CHOICE_FLOW_OK waiting=10 simultaneous=10 blocks=5+5");
                 done=true; finishAt=Time.realtimeSinceStartup;

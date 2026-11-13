@@ -105,7 +105,7 @@ namespace PenaltyArena.Editor
                 for(int i=0;i<2800;i++) {
                     float x=bx+(float)random.NextDouble()*6,z=bz+(float)random.NextDouble()*6;
                     if((new Vector2(x/1.2f,(z-11)/.55f).sqrMagnitude<1 || new Vector2(x/2,(z-.45f)/.7f).sqrMagnitude<1) && random.NextDouble()<.86)continue;
-                    float h=.018f+(float)random.NextDouble()*.022f,w=.0035f;var p=new Vector3(x,.001f,z);var axis=Quaternion.Euler(0,(float)random.NextDouble()*360,0)*Vector3.right;
+                    float h=.013f+(float)random.NextDouble()*.021f,w=.0018f+(float)random.NextDouble()*.0022f;var p=new Vector3(x,.001f,z);var axis=Quaternion.Euler(0,(float)random.NextDouble()*360,0)*Vector3.right;
                     Color c=Color.Lerp(new Color(.10f,.18f,.04f),new Color(.22f,.32f,.08f),(float)random.NextDouble());
                     c=c.linear;
                     blades.Tri(p-axis*w,p+Vector3.up*h+axis*.006f,p+axis*w,c);blades.Tri(p+axis*w,p+Vector3.up*h+axis*.006f,p-axis*w,c);
@@ -113,6 +113,25 @@ namespace PenaltyArena.Editor
                 }
                 MeshObject("NearGrass"+chunk,blades,bladeMat,parent);
             }
+            // Higher blade density in the strike camera's immediate foreground.
+            var closeGrass = new Geometry();
+            for (int i = 0; i < 5200; i++)
+            {
+                float x = -2f + (float)random.NextDouble() * 4f;
+                float z = 9.4f + (float)random.NextDouble() * 4f;
+                float worn = Mathf.Exp(-new Vector2(x / .45f, (z - 11f) / .34f).sqrMagnitude);
+                if (random.NextDouble() < worn * .82f) continue;
+                var p = new Vector3(x,.001f,z);
+                var axis = Quaternion.Euler(0,(float)random.NextDouble()*360f,0)*Vector3.right;
+                float height = (.015f + (float)random.NextDouble() * .024f) * (1f - worn * .4f);
+                var lean = Vector3.up * height + axis * (.003f + height * .2f);
+                var color = Color.Lerp(new Color(.15f,.23f,.055f), new Color(.29f,.38f,.11f),
+                    (float)random.NextDouble()).linear;
+                closeGrass.Tri(p-axis*.0025f,p+lean,p+axis*.0025f,color);
+                closeGrass.Tri(p+axis*.0025f,p+lean,p-axis*.0025f,color);
+                for(int j=closeGrass.n.Count-6;j<closeGrass.n.Count;j++) closeGrass.n[j]=Vector3.up;
+            }
+            MeshObject("PenaltySpotGrass",closeGrass,bladeMat,parent);
         }
         static void Goal(PenaltyGame game,Transform parent)
         {
@@ -123,16 +142,25 @@ namespace PenaltyArena.Editor
             var net=new Geometry();
             for(int i=0;i<=46;i++) {
                 float x=-3.66f+i*7.32f/46;
-                net.Rod(new Vector3(x,.04f,-1.85f),new Vector3(x,2.44f,-1.7f),.0045f,Color.white,4);
+                for (int row = 0; row < GoalNetMotion.Rows - 1; row++) {
+                    float y0 = .04f + row * .15f, y1 = y0 + .15f;
+                    net.Rod(new Vector3(x,y0,GoalNetMotion.RearDepth(y0)),
+                        new Vector3(x,y1,GoalNetMotion.RearDepth(y1)),.0045f,Color.white,4);
+                }
                 net.Rod(new Vector3(x,2.44f,-1.7f),new Vector3(x,2.44f,0),.0045f,Color.white,4);
             }
             for(int i=0;i<=16;i++) {
                 float y=.04f+i*2.4f/16,z=Mathf.Lerp(-1.85f,-1.7f,i/16f);
-                net.Rod(new Vector3(-3.66f,y,z),new Vector3(3.66f,y,z),.0045f,Color.white,4);
+                for (int col = 0; col < GoalNetMotion.Columns - 1; col++) {
+                    float x0 = -3.66f + col * 7.32f / (GoalNetMotion.Columns - 1);
+                    float x1 = -3.66f + (col + 1) * 7.32f / (GoalNetMotion.Columns - 1);
+                    net.Rod(new Vector3(x0,y,z),new Vector3(x1,y,z),.0045f,Color.white,4);
+                }
                 foreach(float x in new[]{-3.66f,3.66f})net.Rod(new Vector3(x,y,z),new Vector3(x,y,0),.0045f,Color.white,4);
             }
             for(int i=1;i<11;i++)foreach(float x in new[]{-3.66f,3.66f})net.Rod(new Vector3(x,.04f,-i*.16f),new Vector3(x,2.44f,-i*.16f),.0045f,Color.white,4);
             var obj=MeshObject("GoalNet",net,rope,parent);game.goalNet=new[]{obj.GetComponent<Renderer>()};
+            obj.AddComponent<GoalNetMotion>().game = game;
         }
     }
 }

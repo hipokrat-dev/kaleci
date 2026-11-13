@@ -8,11 +8,20 @@ namespace PenaltyArena
     // Explicit development-only capture; fixture scores are labelled as a preview in the HUD.
     public sealed class PresentationCapture : MonoBehaviour
     {
-        string destination;bool withUI,players;
+        string destination;bool withUI,players,cinematic;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Install()
         {
-            var args=Environment.GetCommandLineArgs();int i=Array.IndexOf(args,"-arena-ui-capture");bool ui=i>=0;
+            var args=Environment.GetCommandLineArgs();
+            int cinematicIndex = Array.IndexOf(args, "-arena-cinematic-capture");
+            if (cinematicIndex >= 0 && cinematicIndex + 1 < args.Length)
+            {
+                var sequence = new GameObject("CinematicCapture").AddComponent<PresentationCapture>();
+                sequence.destination = args[cinematicIndex + 1];
+                sequence.cinematic = true;
+                return;
+            }
+            int i=Array.IndexOf(args,"-arena-ui-capture");bool ui=i>=0;
             if(i<0)i=Array.IndexOf(args,"-arena-player-capture");bool player=i>=0&&!ui;
             if(i<0)i=Array.IndexOf(args,"-arena-look-capture");if(i<0||i+1>=args.Length)return;
             var capture=new GameObject("PresentationCapture").AddComponent<PresentationCapture>();capture.destination=args[i+1];capture.withUI=ui;capture.players=player;
@@ -20,7 +29,27 @@ namespace PenaltyArena
         IEnumerator Start()
         {
             Directory.CreateDirectory(destination);var game=FindFirstObjectByType<PenaltyGame>();yield return null;
+            if (cinematic)
+            {
+                var opening = game.GetComponent<ArenaUI>();
+                if (!opening.OpeningActive) yield break;
+                yield return new WaitUntil(() => opening.OpeningElapsed >= 1.2f);
+                yield return CaptureFrame("opening");
+                yield return new WaitUntil(() => opening.OpeningElapsed >= 4.4f);
+                yield return CaptureFrame("stadium");
+                yield return new WaitUntil(() => !opening.OpeningActive);
+                yield return CaptureFrame("menu");
+                yield return new WaitUntil(() => game.View.shotStartedAt > 0 && game.NetworkNow - game.View.shotStartedAt >= .51);
+                yield return CaptureFrame("contact-closeup");
+                yield return new WaitUntil(() => game.NetworkNow - game.View.shotStartedAt >= 1.13);
+                yield return CaptureFrame("ball-and-keeper");
+                yield return new WaitUntil(() => game.View.netHitAt > 0 && game.NetworkNow - game.View.netHitAt >= .12);
+                yield return CaptureFrame("net-impact");
+                Debug.Log("CINEMATIC_CAPTURE_OK");
+                yield break;
+            }
             var ui=game.GetComponent<ArenaUI>();game.enabled=false;ui.enabled=withUI;game.strikerMotion.enabled=false;game.keeperMotion.enabled=false;game.ball.isKinematic=true;
+            while (ui.OpeningActive) yield return null;
             string[] names=withUI?new[]{"home","shooter","keeper","locked","opponent-ready","roles-swapped","save","result","settings","finished","tablet","wide"}:players?new[]{"shooter","keeper","striker-portrait","keeper-portrait","hands","strike","save-low","save-high","recovery"}:new[]{"shooter","keeper","save"};
             foreach(string name in names) {
                 bool keeper=name=="keeper";game.SetGoalNetVisible(!keeper);
@@ -57,6 +86,15 @@ namespace PenaltyArena
                 for(int frame=0;frame<10;frame++)yield return null;
             }
             Debug.Log(withUI?"PRESENTATION_UI_CAPTURE_OK":players?"PRESENTATION_ACTORS_CAPTURE_OK":"PRESENTATION_PLAYER_CAPTURE_OK");Application.Quit(0);
+        }
+        IEnumerator CaptureFrame(string name)
+        {
+            yield return new WaitForEndOfFrame();
+            var image = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+            image.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
+            image.Apply();
+            File.WriteAllBytes(Path.Combine(destination, name + ".png"), image.EncodeToPNG());
+            Destroy(image);
         }
     }
 }

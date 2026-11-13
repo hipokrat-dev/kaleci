@@ -14,6 +14,9 @@ namespace PenaltyArena
         public Vector3 shooterCameraPosition=new Vector3(0,1.6f,15.5f),shooterCameraTarget=new Vector3(0,-1,0);
         public Vector3 keeperCameraPosition=new Vector3(0,1.4f,-3),keeperCameraTarget=new Vector3(0,.85f,10);
         public Renderer[] goalNet = Array.Empty<Renderer>();
+        double netHitAt;
+        Vector3 netHitPoint;
+        float netHitSpeed;
         public RoomConnection room;
         public CharacterMotion keeperMotion, strikerMotion;
         public double NetworkNow => room.NetworkTime;
@@ -53,12 +56,14 @@ namespace PenaltyArena
             ball.GetComponent<BallContact>().game = this;
             ResetBall();
             if(GetComponent<StadiumAudio>()==null)gameObject.AddComponent<StadiumAudio>();
+            gameObject.AddComponent<ShotPresentation>();
         }
         void OnDestroy() { room.Command -= Handle; room.Snapshot -= Receive; room.Lost -= Disconnected; }
         void Disconnected()
         {
             phase = MatchPhase.Disconnected; View.phase = (int)phase;
             ball.isKinematic = true; gesture = false; shotAt=0;diveCode=0;ready[0] = ready[1] = false;
+            netHitAt = View.netHitAt = 0;
             rematch[0] = rematch[1] = false; lastSequence = -1; choices=null;submittedShotId=-1;View.locked0=View.locked1=false;View.diveCode=0;View.shotStartedAt=0;View.diveStartedAt=-100;
         }
         void Receive(MatchSnapshot state)
@@ -108,6 +113,7 @@ namespace PenaltyArena
         }
         void ResetBall()
         {
+            netHitAt = 0;
             ball.isKinematic = true; ball.position = new Vector3(0, .115f, 11); ball.rotation = Quaternion.identity;
             keeper.position = new Vector3(0, 0, .45f);
             if(strikerMotion!=null)striker.position=strikerMotion.home;
@@ -119,6 +125,19 @@ namespace PenaltyArena
             phase = rules.Finished ? MatchPhase.Finished : MatchPhase.Result; resultAt = Time.time;
         }
         public void Contact(bool goalkeeper) { if (room.Host && phase == MatchPhase.Flying && goalkeeper) touched = true; }
+        public void ContactNet(Vector3 point, float speed)
+        {
+            if (!room.Host || netHitAt > 0 || speed < .5f) return;
+            if (phase != MatchPhase.Result && phase != MatchPhase.Finished) return;
+            if (rules.History[rules.Shooter].LastOrDefault() != ShotResult.Goal) return;
+            netHitAt = NetworkNow;
+            netHitPoint = point;
+            netHitSpeed = speed;
+            // A loose net absorbs much more energy than the rigid backstop.
+            ball.linearVelocity *= .28f;
+            ball.angularVelocity *= .6f;
+            nextSend = 0;
+        }
         void FixedUpdate()
         {
             if (!room.Host || !room.Connected) return;
@@ -167,6 +186,7 @@ namespace PenaltyArena
                     ball = ball.position, ballRotation = ball.rotation, keeper = keeper.position, easy = Easy,
                     diveCode = diveCode, diveProgress = dived ? Mathf.Clamp01((Time.time-diveAt)/CurrentDiveDuration) : 0,
                     shotStartedAt=shotAt,diveStartedAt=diveStartedAt,serverSentAt=NetworkNow,
+                    netHitAt=netHitAt,netHitPoint=netHitPoint,netHitSpeed=netHitSpeed,
                     ballVelocity=phase==MatchPhase.Flying?ball.linearVelocity:Vector3.zero,
                     message = phase == MatchPhase.Result || phase == MatchPhase.Finished ? (rules.History[rules.Shooter].LastOrDefault() == ShotResult.Goal ? "GOL" : touched ? "KURTARIŞ" : "DIŞARIDA") : "" });
             }
@@ -182,7 +202,7 @@ namespace PenaltyArena
             UpdateCameraFraming();
             bool inMatch = room.Connected && Phase != MatchPhase.Lobby && Phase != MatchPhase.Disconnected;
             bool goalie = inMatch && !Shooting;
-            SetGoalNetVisible(!goalie);
+            SetGoalNetVisible(!goalie || View.netHitAt > 0);
             Vector3 cameraPos = goalie ? keeperCameraPosition : shooterCameraPosition;
             Vector3 look = goalie ? keeperCameraTarget : shooterCameraTarget;
             gameCamera.transform.position = Vector3.Lerp(gameCamera.transform.position, cameraPos, 1 - Mathf.Exp(-5 * Time.deltaTime));

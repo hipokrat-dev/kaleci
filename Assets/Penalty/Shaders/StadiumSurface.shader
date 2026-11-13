@@ -2,7 +2,7 @@ Shader "Penalty/Stadium Surface"
 {
  Properties {
   _BaseMap("Surface",2D)="white" {} _BaseColor("Tint",Color)=(1,1,1,1)
-  _Mode("0 Surface 1 Pitch 2 Fabric",Float)=0 _Smoothness("Smoothness",Range(0,1))=.2
+  _Mode("0 Surface 1 Pitch 2 Fabric 3 Football",Float)=0 _Smoothness("Smoothness",Range(0,1))=.2
   _Tiling("Pitch texture scale",Float)=.75 _Emission("Emission",Color)=(0,0,0,0)
  }
  SubShader {
@@ -32,7 +32,10 @@ Shader "Penalty/Stadium Surface"
     half3 normal=normalize(i.normal);half smoothness=_Smoothness;
     if(_Mode==1) {
      float x=i.world.x,z=i.world.z;
-     float stripe=sin(z*3.14159265/5.25);albedo*=1+stripe*.07;
+     float stripe=sin(z*3.14159265/5.25);albedo*=1+stripe*.09;
+     float detailFade=saturate(1-max(fwidth(x),fwidth(z))*95);
+     float grassGrain=sin(x*321+sin(z*119))*sin(z*281+sin(x*143));
+     albedo*=1+grassGrain*.16*detailFade;
      float wear=exp(-dot(float2(x/.85,(z-11)/.55),float2(x/.85,(z-11)/.55))*2)+exp(-dot(float2(x/2.1,(z-.5)/.8),float2(x/2.1,(z-.5)/.8))*2);
      float noise=SAMPLE_TEXTURE2D(_BaseMap,sampler_BaseMap,uv*.173+.25).g;
      albedo=lerp(albedo,half3(.17,.115,.052)*(noise*.7+.6),saturate(wear*.9)*(1-noise*.4));
@@ -50,10 +53,19 @@ Shader "Penalty/Stadium Surface"
      float a=SAMPLE_TEXTURE2D(_BaseMap,sampler_BaseMap,uv+float2(.001,0)).g;
      float b=SAMPLE_TEXTURE2D(_BaseMap,sampler_BaseMap,uv+float2(0,.001)).g;
      float c=SAMPLE_TEXTURE2D(_BaseMap,sampler_BaseMap,uv).g;
-     normal=normalize(normal+float3((c-a)*.85,0,(c-b)*.85));
+     normal=normalize(normal+float3((c-a)*1.4,0,(c-b)*1.4)
+                       +float3(grassGrain,0,sin(z*277+x*228))*.11*detailFade);
+     smoothness=lerp(.15,.29,saturate(c*1.7))*(1-wear*.22);
     } else if(_Mode==2) {
      float weave=sin(uv.x*2800)*sin(uv.y*2800);
      albedo*=1+weave*.012*saturate(1-fwidth(uv.x)*2800);smoothness*=.85+weave*.03;
+    } else if(_Mode==3) {
+     float2 p=i.uv*170;
+     float2 cell=frac(p+float2(floor(p.y)*.5,0))-.5;
+     float fade=saturate(1-max(fwidth(p.x),fwidth(p.y))*1.3);
+     float pore=1-smoothstep(.08,.27,length(cell));
+     albedo*=1-pore*.22*fade;
+     smoothness*=1-pore*.55*fade;
     }
     InputData data=(InputData)0;data.positionWS=i.world;data.normalWS=normal;data.viewDirectionWS=GetWorldSpaceNormalizeViewDir(i.world);data.shadowCoord=TransformWorldToShadowCoord(i.world);data.bakedGI=SampleSH(normal);data.normalizedScreenSpaceUV=GetNormalizedScreenSpaceUV(i.positionCS);data.shadowMask=1;
     data.vertexLighting=VertexLighting(i.world,normal);
