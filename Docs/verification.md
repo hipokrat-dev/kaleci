@@ -1,4 +1,12 @@
-# Doğrulama — 12 Kasım 2026
+# Doğrulama
+
+## 17 Kasım 2026 — 0.4.0
+
+- Sert arka file çarpışması gol sonrası devre dışı kalır. Host, arka/yan/üst file temasındaki gerilimi ve sönümlemeyi uygular. Yakalanan topun zemin sekmesi ve yuvarlanması azalır. File görseli darbe dalgasına ek olarak topun baskısını izler ve düşey yönde de esner.
+- Rüzgâr her atış öncesi sabitlenir ve snapshot ile iki oyuncuya gönderilir. Karşılık gelen ilk/ikinci beşli atışlarda aynı değerler kullanılır. Seçim ekranı yönü ve m/s değerini gösterir. Yatay rüzgâr ivmesi yalnız uçuşta uygulanır.
+- Yerel iki uygulamalı hareket testi geçti. İki süreçte `WIND_AND_GOAL_RETENTION_OK`, `NET_IMPACT_OK` ve aynı 10 atış sonucu görüldü. İlk gol sonrası topun sonuç evresi boyunca sınırlar içinde kalması ve file temasından 1,5 saniye sonra hâlâ kalede bulunması kontrol edilir. Test botu görünen rüzgâra göre hedefini düzeltir.
+- Unity içinde 129 kural, 1.238 hareket, 71 arayüz ve 126 sahne kontrolü geçti. Mac ve Android IL2CPP ARM64 derlemeleri başarılı.
+- Android paketi `Builds/TabletTest/PenaltiArena-0.4.0.apk`, 65.324.273 byte. SHA-256 `2030cd5c38601ec42815eb4431fc5d3d2ff6aad0a32d845e41810dc87290fa26`. İmza önceki paketle eşleşir, versionCode 4 ve ağ protokolü 4 kullanılır. Fiziksel tablet testi yapılmadı.
 
 ## Güncel teslim — 0.2.0, protokol 2
 

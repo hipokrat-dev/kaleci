@@ -187,6 +187,12 @@ namespace PenaltyArena
             string instruction=phase==MatchPhase.Windup?"İKİ SEÇİM HAZIR · BAŞLIYOR":phase==MatchPhase.Flying?"PENALTI OYNANIYOR":phase==MatchPhase.Result?"SONRAKİ ATIŞ HAZIRLANIYOR":locked?"SEÇİMİN KİLİTLENDİ":shooting?"HEDEF İÇİN KAYDIR VE BIRAK":"ATLAYIŞ YÖNÜNÜ SEÇ";
             theme.Panel(new Rect(center-211,628,422,40),true);theme.Label(new Rect(center-205,632,410,31),instruction,theme.caption);
             if(phase==MatchPhase.Aiming){
+                float screenWind = v.wind.x * (game.gameCamera.transform.right.x >= 0 ? 1 : -1);
+                string direction = Mathf.Abs(screenWind) < .5f ? "DÜZ" : screenWind > 0 ? "SAĞ" : "SOL";
+                string depth = v.wind.z < -1 ? " · KALEYE DOĞRU" : v.wind.z > 1 ? " · KARŞIDAN" : "";
+                theme.Panel(new Rect(22, 166, 265, 62), true);
+                theme.Label(new Rect(29, 171, 251, 24), "RÜZGÂR " + direction + "  " + v.wind.magnitude.ToString("0.0") + " m/s", theme.caption);
+                theme.Label(new Rect(29, 198, 251, 23), depth.Trim(' ', '·'), theme.muted);
                 string detail=locked?"Rakibin seçimi bekleniyor…":opponentLocked?"Rakip hazır. Seçimini yap.":"İkiniz de seçince aynı anda başlarsınız.";
                 theme.Label(new Rect(center-260,674,520,27),detail,theme.muted);
                 string turn=(v.shooter==0?v.name0:v.name1)+" · "+(v.shotId<5?"İLK 5 ATIŞ":v.shotId<10?"İKİNCİ 5 ATIŞ":"EK ATIŞLAR");

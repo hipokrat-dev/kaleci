@@ -7,6 +7,9 @@ namespace PenaltyArena
     {
         ArenaUI arenaUI;
         bool firstGoalHitNet;
+        readonly Vector3[] seenWinds = new Vector3[5];
+        bool windChecked;
+        bool retainedGoal;
         PenaltyGame game; bool host, relay, motion, reportedCode, started, ready, done, left; string joinCode=""; int sent = -1,dived=-1; float began, finishAt,aimingAt;int seenShot=-1,waitingTurns,startedTurns;bool sawWait,sawStart;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Install()
@@ -47,8 +50,19 @@ namespace PenaltyArena
             if(!game.room.Connected) return;
             if(!ready && game.View.count==2) { ready=true; game.Ready(); }
             var v=game.View;
+            if (game.Phase == MatchPhase.Result && v.history0 == "G" && v.shotId == 0)
+            {
+                if (v.ball.z > -.1f || v.ball.z < -2.7f || Mathf.Abs(v.ball.x) > 4.4f)
+                { Fail("scored ball escaped the net"); return; }
+                if (v.netHitAt > 0 && game.NetworkNow - v.netHitAt > 1.5) retainedGoal = true;
+            }
             if (v.shotId == 0 && v.netHitAt > 0 && v.netHitSpeed > 0) firstGoalHitNet = true;
             if(game.Phase==MatchPhase.Aiming && v.shotId!=seenShot) {
+                if (v.wind.magnitude < 1.9f || v.wind.magnitude > 9.1f) { Fail("wind range"); return; }
+                if (v.shotId < 5) seenWinds[v.shotId] = v.wind;
+                else if (v.shotId < 10 && Vector3.Distance(seenWinds[v.shotId % 5], v.wind) > .001f)
+                { Fail("unequal wind between five-shot blocks"); return; }
+                windChecked = true;
                 seenShot=v.shotId;aimingAt=Time.realtimeSinceStartup;sawWait=sawStart=false;
             }
             if(game.Phase!=MatchPhase.Lobby && v.shooter!=(v.shotId<5?0:v.shotId<10?1:(v.shotId-10)%2)){Fail("role sequence");return;}
@@ -64,7 +78,11 @@ namespace PenaltyArena
                     sent=v.shotId;
                     float x=host?2.8f:4.7f;
                     if(motion&&host&&v.shotId>0)x=v.shotId%2==0?2.9f:-2.9f;
-                    game.SubmitShot(x,1,.65f);
+                    float speed = game.ballSpeed * (v.easy ? .8f : 1) * Mathf.Lerp(.7f,1.15f,.65f);
+                    float flight = 11f / speed;
+                    // The test bot compensates for the visible wind as a player would.
+                    float compensation = PenaltyGame.WindAcceleration(v.wind).x * .5f * flight * flight;
+                    game.SubmitShot(x - compensation,1,.65f);
                     game.room.Send(new PlayerCommand{action="shoot",shotId=v.shotId,x=0,y=1,power=.2f});
                 }
                 if(select && !game.Shooting && dived!=v.shotId) {
@@ -80,6 +98,8 @@ namespace PenaltyArena
             }
             if(game.Phase==MatchPhase.Finished && !done) {
                 if (!firstGoalHitNet) { Fail("first goal produced no back-net impact"); return; }
+                if (!windChecked || !retainedGoal) { Fail("wind or retained-ball coverage missing"); return; }
+                Debug.Log("WIND_AND_GOAL_RETENTION_OK");
                 Debug.Log("NET_IMPACT_OK");
                 if(waitingTurns!=10||startedTurns!=10){Fail($"observed barriers={waitingTurns} starts={startedTurns}");return;}
                 Debug.Log("CHOICE_FLOW_OK waiting=10 simultaneous=10 blocks=5+5");

@@ -103,7 +103,15 @@ Paketler ve `ArenaStadium.unity` hazırken `Penalty Arena → 07 — Şut ve kur
 
 `ArenaAnimated.unity` hazırken `Penalty Arena → 08 — Gece arenasını oluştur`, ardından `09 — Gece sahnesini doğrula` seç. `ArenaNight.unity` üretilir ve Android build bu sahneyi kullanır. Üç katlı seyircili tribün, çim, projektörler, beyaz/lacivert 9 ve turkuaz 1 numara formaları, iskelete bağlı saç ve gece renk düzeni içerir. Üretim/görsel kaynak ayrıntıları: [Docs/art-direction.md](Docs/art-direction.md). Paketlerden türetilen ham varlıklar Git dışındadır.
 
-## Sürüm 0.3.0
+## Sürüm 0.4.0
+
+Android paketi `Builds/TabletTest/PenaltiArena-0.4.0.apk` yolundadır. İki cihazda da bu sürüm kurulmalıdır. Ağ protokolü 4 kullanılır.
+
+Rüzgâr her atış öncesinde yön ve m/s olarak gösterilir, seçimler kilitlendikten sonra sabit kalır ve uçuşta topa yatay ivme uygular. Şutçu hedefini rüzgâra göre ayarlayabilir. İlk ve ikinci oyuncunun karşılık gelen beş atışında aynı rüzgâr dizisi uygulanır.
+
+Gol sonrasında sert arka file çarpışması yerini sönümlü file gerilimine bırakır. Top fileye baskı yaptıkça file esner ve hafifçe yükselir. Darbe yayılırken enerjisi azalır, yakalanan topun sekmesi ve yuvarlanması sönümlenir.
+
+## Önceki sürüm 0.3.0
 
 Android test paketi `Builds/TabletTest/PenaltiArena-0.3.0.apk` yolundadır. İki oyuncu da aynı sürümü kurmalıdır. File darbesini paylaşan ağ mesajları protokol 3 kullanır.
 

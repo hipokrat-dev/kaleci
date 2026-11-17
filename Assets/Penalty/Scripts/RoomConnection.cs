@@ -21,7 +21,8 @@ namespace PenaltyArena
         public Vector3 ballVelocity;
         public double netHitAt;
         public Vector3 netHitPoint;
-        public float netHitSpeed;
+        public float netHitSpeed, netBulge;
+        public Vector3 wind;
         public string name0 = "Oyuncu 1", name1 = "Oyuncu 2", history0 = "", history1 = "";
         public bool ready0, ready1, easy; public int count;
         public Vector3 ball, keeper; public Quaternion ballRotation; public string message;
@@ -45,7 +46,7 @@ namespace PenaltyArena
         {
             manager = gameObject.AddComponent<NetworkManager>();
             var transport = gameObject.AddComponent<UnityTransport>();
-            manager.NetworkConfig = new NetworkConfig { ProtocolVersion = 3, NetworkTransport = transport, EnableSceneManagement = false, ConnectionApproval = true };
+            manager.NetworkConfig = new NetworkConfig { ProtocolVersion = 4, NetworkTransport = transport, EnableSceneManagement = false, ConnectionApproval = true };
             manager.ConnectionApprovalCallback = (request, response) => {
                 response.Approved = manager.ConnectedClients.Count < 2;
                 response.CreatePlayerObject = false; response.Pending = false;

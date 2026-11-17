@@ -17,6 +17,13 @@ namespace PenaltyArena
         double netHitAt;
         Vector3 netHitPoint;
         float netHitSpeed;
+        bool goalScored;
+        Collider rearNetCollider;
+        Collider ballCollider;
+        PhysicsMaterial footballMaterial, caughtBallMaterial;
+        readonly Vector3[] matchWinds = new Vector3[5];
+        Vector3 wind;
+        public static Vector3 WindAcceleration(Vector3 velocity) => Vector3.ClampMagnitude(velocity * .22f, 2.2f);
         public RoomConnection room;
         public CharacterMotion keeperMotion, strikerMotion;
         public double NetworkNow => room.NetworkTime;
@@ -54,11 +61,19 @@ namespace PenaltyArena
             Application.targetFrameRate = 60; Application.runInBackground = true;
             room.Command += Handle; room.Snapshot += Receive; room.Lost += Disconnected;
             ball.GetComponent<BallContact>().game = this;
+            ballCollider = ball.GetComponent<Collider>();
+            footballMaterial = ballCollider.sharedMaterial;
+            caughtBallMaterial = new PhysicsMaterial("Net-caught football")
+            {
+                bounciness = .04f, dynamicFriction = .7f, staticFriction = .7f,
+                bounceCombine = PhysicsMaterialCombine.Minimum
+            };
+            rearNetCollider = GameObject.Find("NetCollision")?.GetComponent<Collider>();
             ResetBall();
             if(GetComponent<StadiumAudio>()==null)gameObject.AddComponent<StadiumAudio>();
             gameObject.AddComponent<ShotPresentation>();
         }
-        void OnDestroy() { room.Command -= Handle; room.Snapshot -= Receive; room.Lost -= Disconnected; }
+        void OnDestroy() { if (caughtBallMaterial != null) Destroy(caughtBallMaterial); room.Command -= Handle; room.Snapshot -= Receive; room.Lost -= Disconnected; }
         void Disconnected()
         {
             phase = MatchPhase.Disconnected; View.phase = (int)phase;
@@ -109,19 +124,34 @@ namespace PenaltyArena
         static string CleanName(string name) => string.IsNullOrWhiteSpace(name) ? "Oyuncu" : new string(name.Where(c => !char.IsControl(c) && c != '<' && c != '>').Take(16).ToArray());
         void Begin()
         {
+            for (int i = 0; i < matchWinds.Length; i++)
+            {
+                float angle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+                float speed = UnityEngine.Random.Range(2f, 9f);
+                matchWinds[i] = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * speed;
+            }
             rules = new MatchRules(); rematch[0] = rematch[1] = false; ResetShot();
         }
         void ResetBall()
         {
             netHitAt = 0;
+            goalScored = false;
+            if (ballCollider != null) ballCollider.sharedMaterial = footballMaterial;
+            if (rearNetCollider != null) rearNetCollider.enabled = true;
             ball.isKinematic = true; ball.position = new Vector3(0, .115f, 11); ball.rotation = Quaternion.identity;
             keeper.position = new Vector3(0, 0, .45f);
             if(strikerMotion!=null)striker.position=strikerMotion.home;
         }
-        void ResetShot() { ResetBall(); choices=new TurnChoices(rules.ShotId,rules.Shooter); turnDiveDuration=0; phase = MatchPhase.Aiming; dived = touched = false; diveCode = 0; diveAt = -100; diveStartedAt=-100; shotAt=0; started = Time.time; }
+        void ResetShot() { ResetBall(); wind = matchWinds[rules.ShotId < 10 ? rules.ShotId % 5 : (rules.ShotId - 10) / 2 % 5]; choices=new TurnChoices(rules.ShotId,rules.Shooter); turnDiveDuration=0; phase = MatchPhase.Aiming; dived = touched = false; diveCode = 0; diveAt = -100; diveStartedAt=-100; shotAt=0; started = Time.time; }
         void Resolve(ShotResult outcome)
         {
             if (phase != MatchPhase.Flying || !rules.Resolve(rules.ShotId, outcome)) return;
+            if (outcome == ShotResult.Goal)
+            {
+                goalScored = true;
+                // Net resistance is integrated below. Remove the rigid, high-bounce backstop.
+                if (rearNetCollider != null) rearNetCollider.enabled = false;
+            }
             phase = rules.Finished ? MatchPhase.Finished : MatchPhase.Result; resultAt = Time.time;
         }
         public void Contact(bool goalkeeper) { if (room.Host && phase == MatchPhase.Flying && goalkeeper) touched = true; }
@@ -134,13 +164,49 @@ namespace PenaltyArena
             netHitPoint = point;
             netHitSpeed = speed;
             // A loose net absorbs much more energy than the rigid backstop.
-            ball.linearVelocity *= .28f;
+            if (ballCollider != null) ballCollider.sharedMaterial = caughtBallMaterial;
             ball.angularVelocity *= .6f;
             nextSend = 0;
+        }
+        void StepGoalNet()
+        {
+            Vector3 position = ball.position;
+            Vector3 velocity = ball.linearVelocity;
+            float rearDepth = GoalNetMotion.RearDepth(Mathf.Clamp(position.y, .04f, 2.44f));
+            float penetration = rearDepth - (position.z - .11f);
+            float side = Mathf.Abs(position.x) + .11f - 3.66f;
+            float roof = position.y + .11f - 2.44f;
+            if (penetration > 0 || side > 0 || roof > 0)
+            {
+                Vector3 point = new Vector3(position.x, position.y, rearDepth);
+                ContactNet(point, velocity.magnitude);
+                // Tension rises with stretch. Damping absorbs impact and prevents a hard rebound.
+                Vector3 acceleration = Vector3.zero;
+                if (penetration > 0) acceleration.z = penetration * 150f - velocity.z * 24f;
+                if (side > 0) acceleration.x = -Mathf.Sign(position.x) * side * 150f - velocity.x * 24f;
+                if (roof > 0) acceleration.y = -roof * 150f - velocity.y * 24f;
+                ball.AddForce(acceleration, ForceMode.Acceleration);
+            }
+            if (netHitAt > 0)
+            {
+                // Slack fabric and grass dissipate the remaining lateral and rolling energy.
+                float damping = position.y < .18f ? 7f : 1.8f;
+                velocity.x *= Mathf.Exp(-damping * Time.fixedDeltaTime);
+                velocity.z *= Mathf.Exp(-damping * Time.fixedDeltaTime);
+                if (position.z > -.14f)
+                {
+                    position.z = -.14f;
+                    velocity.z = Mathf.Min(0, velocity.z);
+                }
+                ball.position = position;
+                ball.linearVelocity = velocity;
+            }
         }
         void FixedUpdate()
         {
             if (!room.Host || !room.Connected) return;
+            if (goalScored) StepGoalNet();
+            else if (phase == MatchPhase.Flying) ball.AddForce(WindAcceleration(wind), ForceMode.Acceleration);
             double now=NetworkNow;
             float shotElapsed=shotAt>0?(float)(now-shotAt):-1;
             if(strikerMotion!=null)strikerMotion.Evaluate(diveCode,0,shotAt>0,phase==MatchPhase.Windup?Mathf.Min(shotElapsed,MotionTiming.StrikeContact):shotElapsed,now);
@@ -186,6 +252,7 @@ namespace PenaltyArena
                     ball = ball.position, ballRotation = ball.rotation, keeper = keeper.position, easy = Easy,
                     diveCode = diveCode, diveProgress = dived ? Mathf.Clamp01((Time.time-diveAt)/CurrentDiveDuration) : 0,
                     shotStartedAt=shotAt,diveStartedAt=diveStartedAt,serverSentAt=NetworkNow,
+                    wind=wind,netBulge=goalScored ? Mathf.Max(0, GoalNetMotion.RearDepth(ball.position.y) - (ball.position.z - .11f)) : 0,
                     netHitAt=netHitAt,netHitPoint=netHitPoint,netHitSpeed=netHitSpeed,
                     ballVelocity=phase==MatchPhase.Flying?ball.linearVelocity:Vector3.zero,
                     message = phase == MatchPhase.Result || phase == MatchPhase.Finished ? (rules.History[rules.Shooter].LastOrDefault() == ShotResult.Goal ? "GOL" : touched ? "KURTARIŞ" : "DIŞARIDA") : "" });
@@ -194,7 +261,7 @@ namespace PenaltyArena
                 float blend = 1 - Mathf.Exp(-22 * Time.deltaTime);
                 float age=(float)System.Math.Clamp(NetworkNow-View.serverSentAt,0,.1);
                 Vector3 displayedBall=View.ball;
-                if(Phase==MatchPhase.Flying)displayedBall+=View.ballVelocity*age+.5f*Physics.gravity*age*age;
+                if(Phase==MatchPhase.Flying)displayedBall+=View.ballVelocity*age+.5f*(Physics.gravity + WindAcceleration(View.wind))*age*age;
                 ball.transform.position = Vector3.Lerp(ball.transform.position, displayedBall, blend);
                 ball.transform.rotation = Quaternion.Slerp(ball.transform.rotation, View.ballRotation, blend);
                 if(keeperMotion==null)keeper.position = Vector3.Lerp(keeper.position, View.keeper, blend);

@@ -23,7 +23,7 @@ namespace PenaltyArena
         {
             var state = game.View;
             float elapsed = (float)(game.NetworkNow - state.netHitAt);
-            if (state.netHitAt <= 0 || elapsed >= Duration)
+            if (state.netHitAt <= 0 || (elapsed >= Duration && state.netBulge < .005f))
             {
                 if (impactAt > 0)
                 {
@@ -39,8 +39,9 @@ namespace PenaltyArena
                 impactAt = state.netHitAt;
                 steps = 0;
                 System.Array.Clear(displacement, 0, displacement.Length);
+                System.Array.Clear(velocity, 0, velocity.Length);
                 Vector3 point = transform.InverseTransformPoint(state.netHitPoint);
-                float strength = Mathf.Clamp(state.netHitSpeed * .42f, .1f, 8f);
+                float strength = Mathf.Clamp(state.netHitSpeed * .9f, .1f, 16f);
                 for (int y = 1; y < Rows - 1; y++)
                     for (int x = 1; x < Columns - 1; x++)
                     {
@@ -50,17 +51,25 @@ namespace PenaltyArena
                     }
             }
 
-            int targetSteps = Mathf.FloorToInt(Mathf.Max(0, elapsed) / Step);
-            if (steps >= targetSteps) return;
+            int targetSteps = Mathf.FloorToInt(Mathf.Clamp(elapsed, 0, Duration) / Step);
+
             while (steps < targetSteps)
             {
                 Advance();
                 steps++;
             }
             float settle = 1f - Mathf.SmoothStep(0f, 1f, (elapsed - 2.2f) / .4f);
+            Vector3 contact = transform.InverseTransformPoint(state.netHitPoint);
             for (int i = 0; i < vertices.Length; i++)
-                if (knots[i] >= 0)
-                    vertices[i].z = rest[i].z - displacement[knots[i]] * settle;
+            {
+                vertices[i] = rest[i];
+                if (knots[i] < 0) continue;
+                float distance = new Vector2(rest[i].x - contact.x, rest[i].y - contact.y).sqrMagnitude;
+                float tension = Mathf.Max(displacement[knots[i]] * settle,
+                    state.netBulge * Mathf.Exp(-distance / .32f));
+                vertices[i].z -= tension;
+                vertices[i].y += Mathf.Abs(tension) * .26f;
+            }
             net.vertices = vertices;
         }
 
@@ -80,7 +89,7 @@ namespace PenaltyArena
                     && x > 0 && x < Columns - 1 && y > 0 && y < Rows - 1 ? y * Columns + x : -1;
             }
             var bounds = net.bounds;
-            bounds.Expand(1.4f);
+            bounds.Expand(2f);
             net.bounds = bounds;
         }
 
